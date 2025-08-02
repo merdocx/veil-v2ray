@@ -1,0 +1,15 @@
+[Unit]
+Description=VPN Key Management API
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/vpn-server
+Environment=PATH=/root/vpn-server/venv/bin
+ExecStart=/root/vpn-server/venv/bin/python /root/vpn-server/api.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target 
