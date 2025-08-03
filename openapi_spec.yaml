@@ -1,0 +1,588 @@
+openapi: 3.0.3
+info:
+  title: VPN Key Management API
+  description: |
+    API для управления VPN ключами и мониторинга трафика.
+    
+    ## Возможности
+    - Создание и удаление VPN ключей
+    - Получение VLESS конфигурации
+    - Точный мониторинг трафика через Xray API
+    - Сброс статистики трафика
+    
+    ## Протокол
+    - VLESS + Reality
+    - Домен: veil-bird.ru
+    - Порт: 443
+    
+    ## Мониторинг
+    - Точность: 95%+
+    - Реальное время
+    - Разделение uplink/downlink
+  version: 1.0.0
+  contact:
+    name: VPN Server Support
+    url: https://github.com/merdocx/veil-v2ray
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://veil-bird.ru/api
+    description: Production server
+
+paths:
+  /:
+    get:
+      summary: Информация о API
+      description: Возвращает базовую информацию о API
+      operationId: getApiInfo
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "VPN Key Management API"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  status:
+                    type: string
+                    example: "running"
+
+  /keys:
+    get:
+      summary: Получить список ключей
+      description: Возвращает список всех VPN ключей
+      operationId: listKeys
+      responses:
+        '200':
+          description: Список ключей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VPNKey'
+              example:
+                - id: "84570736-8bf5-47af-92d4-3a08f2693ef8"
+                  name: "Мой VPN ключ"
+                  uuid: "44ed718f-9f5d-4bd9-8585-e5a875cd3858"
+                  created_at: "2025-08-02T15:22:39.822640"
+                  is_active: true
+                - id: "68910aad-3f6b-4599-a735-bdb080265925"
+                  name: "Test Traffic Key"
+                  uuid: "0b816714-3904-4a93-9a81-8f63c1132c66"
+                  created_at: "2025-08-02T14:53:42.897140"
+                  is_active: true
+    
+    post:
+      summary: Создать ключ
+      description: Создает новый VPN ключ с указанным именем
+      operationId: createKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKeyRequest'
+            example:
+              name: "Мой VPN ключ"
+      responses:
+        '200':
+          description: Ключ создан успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VPNKey'
+              example:
+                id: "84570736-8bf5-47af-92d4-3a08f2693ef8"
+                name: "Мой VPN ключ"
+                uuid: "44ed718f-9f5d-4bd9-8585-e5a875cd3858"
+                created_at: "2025-08-02T15:22:39.822640"
+                is_active: true
+        '500':
+          description: Ошибка создания ключа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /keys/{key_id}:
+    get:
+      summary: Получить информацию о ключе
+      description: Возвращает информацию о конкретном VPN ключе
+      operationId: getKey
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          description: ID ключа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о ключе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VPNKey'
+        '404':
+          description: Ключ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      summary: Удалить ключ
+      description: Удаляет VPN ключ по ID
+      operationId: deleteKey
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          description: ID ключа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ключ удален успешно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Key deleted successfully"
+                  deleted_key:
+                    $ref: '#/components/schemas/VPNKey'
+        '404':
+          description: Ключ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /keys/{key_id}/config:
+    get:
+      summary: Получить конфигурацию клиента
+      description: Возвращает VLESS конфигурацию для подключения к VPN
+      operationId: getKeyConfig
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          description: ID ключа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Конфигурация клиента
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    $ref: '#/components/schemas/VPNKey'
+                  client_config:
+                    type: string
+                    description: VLESS конфигурация в текстовом формате
+        '404':
+          description: Ключ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Ключ неактивен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /keys/{key_id}/traffic/exact:
+    get:
+      summary: Получить точную статистику трафика ключа
+      description: Возвращает точную статистику трафика для конкретного ключа через Xray API
+      operationId: getKeyExactTraffic
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          description: ID ключа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Точная статистика трафика
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    $ref: '#/components/schemas/VPNKey'
+                  traffic_bytes:
+                    $ref: '#/components/schemas/TrafficStats'
+        '404':
+          description: Ключ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Ключ неактивен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Xray API недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /keys/{key_id}/traffic/reset:
+    post:
+      summary: Сбросить статистику трафика
+      description: Сбрасывает статистику трафика для конкретного ключа
+      operationId: resetKeyTraffic
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          description: ID ключа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика сброшена успешно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Traffic stats reset successfully"
+                  key_id:
+                    type: string
+                    format: uuid
+                  uuid:
+                    type: string
+                    format: uuid
+                  source:
+                    type: string
+                    example: "xray_api"
+        '404':
+          description: Ключ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Ключ неактивен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Xray API недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /traffic/exact:
+    get:
+      summary: Получить точную статистику всех ключей
+      description: Возвращает точную статистику трафика для всех активных ключей через Xray API
+      operationId: getExactTraffic
+      responses:
+        '200':
+          description: Точная статистика всех ключей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_keys:
+                    type: integer
+                    description: Общее количество ключей
+                  active_keys:
+                    type: integer
+                    description: Количество активных ключей
+                  traffic_stats:
+                    $ref: '#/components/schemas/AllTrafficStats'
+        '503':
+          description: Xray API недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /traffic/status:
+    get:
+      summary: Получить статус системы мониторинга
+      description: Возвращает статус системы мониторинга трафика и доступность Xray API
+      operationId: getTrafficStatus
+      responses:
+        '200':
+          description: Статус системы мониторинга
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_keys:
+                    type: integer
+                    description: Общее количество ключей
+                  active_keys:
+                    type: integer
+                    description: Количество активных ключей
+                  xray_api_available:
+                    type: boolean
+                    description: Доступность Xray API
+                  traffic_stats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key_id:
+                          type: string
+                          format: uuid
+                        key_name:
+                          type: string
+                        uuid:
+                          type: string
+                          format: uuid
+                        exact_traffic:
+                          $ref: '#/components/schemas/TrafficStats'
+                        has_traffic_data:
+                          type: boolean
+
+components:
+  schemas:
+    VPNKey:
+      type: object
+      required:
+        - id
+        - name
+        - uuid
+        - created_at
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID ключа
+        name:
+          type: string
+          description: Имя ключа
+        uuid:
+          type: string
+          format: uuid
+          description: UUID для VLESS протокола
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания (ISO 8601)
+        is_active:
+          type: boolean
+          description: Статус активности
+
+    CreateKeyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Имя нового ключа
+          minLength: 1
+          maxLength: 100
+
+    TrafficStats:
+      type: object
+      required:
+        - uuid
+        - uplink_bytes
+        - downlink_bytes
+        - total_bytes
+        - uplink_formatted
+        - downlink_formatted
+        - total_formatted
+        - uplink_mb
+        - downlink_mb
+        - total_mb
+        - timestamp
+        - source
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: UUID ключа
+        uplink_bytes:
+          type: integer
+          minimum: 0
+          description: Исходящий трафик в байтах
+        downlink_bytes:
+          type: integer
+          minimum: 0
+          description: Входящий трафик в байтах
+        total_bytes:
+          type: integer
+          minimum: 0
+          description: Общий трафик в байтах
+        uplink_formatted:
+          type: string
+          description: Форматированный исходящий трафик
+        downlink_formatted:
+          type: string
+          description: Форматированный входящий трафик
+        total_formatted:
+          type: string
+          description: Форматированный общий трафик
+        uplink_mb:
+          type: number
+          format: float
+          minimum: 0
+          description: Исходящий трафик в МБ
+        downlink_mb:
+          type: number
+          format: float
+          minimum: 0
+          description: Входящий трафик в МБ
+        total_mb:
+          type: number
+          format: float
+          minimum: 0
+          description: Общий трафик в МБ
+        timestamp:
+          type: integer
+          description: Unix timestamp
+        source:
+          type: string
+          description: Источник данных
+          enum: [xray_api]
+
+    AllTrafficStats:
+      type: object
+      required:
+        - total_uplink_bytes
+        - total_downlink_bytes
+        - total_bytes
+        - total_uplink_formatted
+        - total_downlink_formatted
+        - total_formatted
+        - total_uplink_mb
+        - total_downlink_mb
+        - total_mb
+        - keys_stats
+        - source
+      properties:
+        total_uplink_bytes:
+          type: integer
+          minimum: 0
+          description: Общий исходящий трафик в байтах
+        total_downlink_bytes:
+          type: integer
+          minimum: 0
+          description: Общий входящий трафик в байтах
+        total_bytes:
+          type: integer
+          minimum: 0
+          description: Общий трафик в байтах
+        total_uplink_formatted:
+          type: string
+          description: Форматированный общий исходящий трафик
+        total_downlink_formatted:
+          type: string
+          description: Форматированный общий входящий трафик
+        total_formatted:
+          type: string
+          description: Форматированный общий трафик
+        total_uplink_mb:
+          type: number
+          format: float
+          minimum: 0
+          description: Общий исходящий трафик в МБ
+        total_downlink_mb:
+          type: number
+          format: float
+          minimum: 0
+          description: Общий входящий трафик в МБ
+        total_mb:
+          type: number
+          format: float
+          minimum: 0
+          description: Общий трафик в МБ
+        keys_stats:
+          type: array
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+                format: uuid
+              uplink_bytes:
+                type: integer
+                minimum: 0
+              downlink_bytes:
+                type: integer
+                minimum: 0
+              total_bytes:
+                type: integer
+                minimum: 0
+              uplink_formatted:
+                type: string
+              downlink_formatted:
+                type: string
+              total_formatted:
+                type: string
+              uplink_mb:
+                type: number
+                format: float
+                minimum: 0
+              downlink_mb:
+                type: number
+                format: float
+                minimum: 0
+              total_mb:
+                type: number
+                format: float
+                minimum: 0
+        source:
+          type: string
+          enum: [xray_api]
+
+    Error:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Описание ошибки
+
+tags:
+  - name: keys
+    description: Управление VPN ключами
+  - name: traffic
+    description: Мониторинг трафика
+  - name: system
+    description: Системные эндпоинты 

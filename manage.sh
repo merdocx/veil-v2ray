@@ -4,6 +4,7 @@
 
 VPN_DIR="/root/vpn-server"
 API_URL="http://localhost:8000"
+API_KEY="QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM="
 
 # Цвета для вывода
 RED='\033[0;31m'
@@ -49,6 +50,7 @@ create_key() {
     
     response=$(curl -s -X POST "$API_URL/api/keys" \
         -H "Content-Type: application/json" \
+        -H "X-API-Key: $API_KEY" \
         -d "{\"name\": \"$1\"}")
     
     if echo "$response" | grep -q "id"; then
@@ -73,7 +75,8 @@ delete_key() {
     
     print_status "Удаление ключа: $1"
     
-    response=$(curl -s -X DELETE "$API_URL/api/keys/$1")
+    response=$(curl -s -X DELETE "$API_URL/api/keys/$1" \
+        -H "X-API-Key: $API_KEY")
     
     if echo "$response" | grep -q "successfully"; then
         print_status "Ключ удален успешно"
@@ -91,7 +94,8 @@ delete_key() {
 list_keys() {
     print_status "Список активных ключей:"
     
-    response=$(curl -s -X GET "$API_URL/api/keys")
+    response=$(curl -s -X GET "$API_URL/api/keys" \
+        -H "X-API-Key: $API_KEY")
     
     if echo "$response" | grep -q "id"; then
         echo "$response" | python3 -m json.tool
@@ -109,7 +113,8 @@ get_config() {
     
     print_status "Получение конфигурации для ключа: $1"
     
-    response=$(curl -s -X GET "$API_URL/api/keys/$1/config")
+    response=$(curl -s -X GET "$API_URL/api/keys/$1/config" \
+        -H "X-API-Key: $API_KEY")
     
     if echo "$response" | grep -q "client_config"; then
         echo "$response" | python3 -c "
@@ -171,7 +176,8 @@ show_stats() {
     print_status "Статистика VPN сервера:"
     
     echo "=== Активные ключи ==="
-    key_count=$(curl -s -X GET "$API_URL/api/keys" | python3 -c "import json, sys; print(len(json.load(sys.stdin)))")
+    key_count=$(curl -s -X GET "$API_URL/api/keys" \
+        -H "X-API-Key: $API_KEY" | python3 -c "import json, sys; print(len(json.load(sys.stdin)))")
     echo "Количество ключей: $key_count"
     
     echo "=== Системные ресурсы ==="
@@ -183,6 +189,56 @@ show_stats() {
     
     echo "Активные соединения:"
     netstat -tlnp | grep :443
+}
+
+# Функция показа точной статистики трафика
+show_traffic() {
+    print_status "Точная статистика трафика VPN сервера:"
+    
+    response=$(curl -s -X GET "$API_URL/api/traffic/exact" \
+        -H "X-API-Key: $API_KEY")
+    
+    if echo "$response" | grep -q "traffic_stats"; then
+        echo "$response" | python3 -m json.tool
+    else
+        print_error "Ошибка получения точной статистики трафика"
+        echo "$response"
+    fi
+}
+
+# Функция показа точной статистики трафика для конкретного ключа
+show_key_traffic() {
+    if [ -z "$1" ]; then
+        echo "Использование: $0 traffic-key <id_ключа>"
+        exit 1
+    fi
+    
+    print_status "Точная статистика трафика для ключа: $1"
+    
+    response=$(curl -s -X GET "$API_URL/api/keys/$1/traffic/exact" \
+        -H "X-API-Key: $API_KEY")
+    
+    if echo "$response" | grep -q "traffic_bytes"; then
+        echo "$response" | python3 -m json.tool
+    else
+        print_error "Ошибка получения точной статистики трафика для ключа"
+        echo "$response"
+    fi
+}
+
+# Функция показа статуса системы мониторинга
+show_traffic_status() {
+    print_status "Статус системы мониторинга трафика:"
+    
+    response=$(curl -s -X GET "$API_URL/api/traffic/status" \
+        -H "X-API-Key: $API_KEY")
+    
+    if echo "$response" | grep -q "traffic_stats"; then
+        echo "$response" | python3 -m json.tool
+    else
+        print_error "Ошибка получения статуса системы мониторинга"
+        echo "$response"
+    fi
 }
 
 # Функция показа помощи
@@ -200,6 +256,9 @@ show_help() {
     echo "  restart                   - Перезапустить сервисы"
     echo "  logs <сервис>             - Показать логи (xray|api|nginx)"
     echo "  stats                     - Показать статистику"
+    echo "  traffic                   - Показать точную статистику трафика"
+    echo "  traffic-key <id>          - Показать точную статистику трафика для ключа"
+    echo "  traffic-status            - Показать статус системы мониторинга"
     echo "  help                      - Показать эту справку"
     echo ""
     echo "Примеры:"
@@ -233,6 +292,15 @@ case $1 in
         ;;
     stats)
         show_stats
+        ;;
+    traffic)
+        show_traffic
+        ;;
+    traffic-key)
+        show_key_traffic "$2"
+        ;;
+    traffic-status)
+        show_traffic_status
         ;;
     help|--help|-h)
         show_help
