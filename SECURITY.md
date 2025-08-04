@@ -4,9 +4,13 @@
 
 ### API Аутентификация
 
-**API ключ:** `QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=`
+**API ключ загружается из переменных окружения** из файла `.env`
 
 Все эндпоинты API (кроме корневого `/` и `/api/`) защищены аутентификацией через заголовок `X-API-Key`.
+
+### HTTPS Безопасность
+
+API теперь поддерживает **HTTPS** с SSL сертификатами для шифрования трафика.
 
 ### Безопасность
 
@@ -18,21 +22,30 @@
 ### Рекомендации по использованию
 
 ```bash
-# ✅ Правильно - используйте API ключ
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" "http://veil-bird.ru/api/keys"
+# ✅ Правильно - используйте API ключ с HTTPS
+curl -k -H "X-API-Key: YOUR_API_KEY" "https://veil-bird.ru/api/keys"
 
 # ❌ Неправильно - без аутентификации
-curl "http://veil-bird.ru/api/keys"
+curl "https://veil-bird.ru/api/keys"
 ```
 
 ### Смена API ключа
 
-Для смены API ключа:
+Для смены API ключа используйте скрипт:
 
-1. Отредактируйте файл `/root/vpn-server/api.py`
-2. Измените значение переменной `API_KEY`
-3. Обновите значение в `/root/vpn-server/manage.sh`
-4. Перезапустите API сервис: `systemctl restart vpn-api`
+```bash
+# Генерация нового API ключа
+python3 /root/vpn-server/generate_api_key.py
+
+# Перезапуск API сервиса
+systemctl restart vpn-api
+```
+
+Или вручную:
+
+1. Отредактируйте файл `/root/vpn-server/.env`
+2. Измените значение переменной `VPN_API_KEY`
+3. Перезапустите API сервис: `systemctl restart vpn-api`
 
 ### Мониторинг безопасности
 

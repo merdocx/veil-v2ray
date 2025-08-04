@@ -8,8 +8,27 @@ from typing import List, Optional, Dict
 from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 
+# Загрузка переменных окружения из .env файла
+def load_env_file():
+    env_file = "/root/vpn-server/.env"
+    if os.path.exists(env_file):
+        with open(env_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key] = value
+
+# Загружаем переменные окружения
+load_env_file()
+
 # Импорт модулей для мониторинга
 from alternative_traffic_monitor import get_key_traffic_bytes, get_all_keys_traffic_bytes, reset_key_traffic_stats
+
+# Импорт новой системы мониторинга
+from port_manager import port_manager, assign_port_for_key, release_port_for_key, get_port_for_key, get_all_port_assignments, reset_all_ports
+from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync
+from port_traffic_monitor import port_traffic_monitor, get_uuid_traffic_bytes, get_all_ports_traffic_bytes, reset_uuid_traffic_stats, get_system_traffic_summary
 
 app = FastAPI(title="VPN Key Management API", version="1.0.0")
 
@@ -17,8 +36,8 @@ app = FastAPI(title="VPN Key Management API", version="1.0.0")
 CONFIG_FILE = "/root/vpn-server/config/config.json"
 KEYS_FILE = "/root/vpn-server/config/keys.json"
 
-# API ключ для аутентификации
-API_KEY = "QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM="
+# API ключ для аутентификации - загружается из переменных окружения
+API_KEY = os.getenv("VPN_API_KEY", "QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=")
 
 class VPNKey(BaseModel):
     id: str
@@ -26,6 +45,7 @@ class VPNKey(BaseModel):
     uuid: str
     created_at: str
     is_active: bool
+    port: Optional[int] = None
 
 class CreateKeyRequest(BaseModel):
     name: str
@@ -183,10 +203,20 @@ async def api_root():
 
 @app.post("/api/keys", response_model=VPNKey)
 async def create_key(request: CreateKeyRequest, api_key: str = Depends(verify_api_key)):
-    """Создать новый VPN ключ"""
+    """Создать новый VPN ключ с индивидуальным портом"""
     try:
+        # Проверяем лимит ключей (максимум 20)
+        keys = load_keys()
+        if len(keys) >= 20:
+            raise HTTPException(status_code=400, detail="Maximum number of keys (20) reached")
+        
         # Генерация UUID для ключа
         key_uuid = str(uuid.uuid4())
+        
+        # Назначаем порт для ключа
+        assigned_port = assign_port_for_key(key_uuid, str(uuid.uuid4()), request.name)
+        if not assigned_port:
+            raise HTTPException(status_code=500, detail="No available ports")
         
         # Создание нового ключа
         new_key = {
@@ -194,44 +224,41 @@ async def create_key(request: CreateKeyRequest, api_key: str = Depends(verify_ap
             "name": request.name,
             "uuid": key_uuid,
             "created_at": datetime.now().isoformat(),
-            "is_active": True
+            "is_active": True,
+            "port": assigned_port
         }
         
         # Загрузка существующих ключей
-        keys = load_keys()
         keys.append(new_key)
         save_keys(keys)
         
-        # Обновление конфигурации Xray
-        config = load_config()
-        client_config = {
-            "id": key_uuid,
-            "flow": "",
-            "email": key_uuid  # Email для статистики (используем UUID)
-        }
-        config["inbounds"][0]["settings"]["clients"].append(client_config)
-        save_config(config)
-        
-        # Проверка и обновление настроек Reality
-        if not verify_reality_settings():
-            raise HTTPException(status_code=500, detail="Failed to verify Reality settings")
+        # Добавляем ключ в конфигурацию Xray с индивидуальным портом
+        if not add_key_to_xray_config(key_uuid, request.name):
+            # Откатываем изменения при ошибке
+            keys = [k for k in keys if k["uuid"] != key_uuid]
+            save_keys(keys)
+            release_port_for_key(key_uuid)
+            raise HTTPException(status_code=500, detail="Failed to add key to Xray config")
         
         # Перезапуск Xray
         if not restart_xray():
+            # Откатываем изменения при ошибке
+            keys = [k for k in keys if k["uuid"] != key_uuid]
+            save_keys(keys)
+            release_port_for_key(key_uuid)
+            remove_key_from_xray_config(key_uuid)
             raise HTTPException(status_code=500, detail="Failed to restart Xray service")
-        
-        # Проверка синхронизации конфигурации
-        if not verify_xray_config():
-            raise HTTPException(status_code=500, detail="Failed to synchronize Xray configuration")
         
         return VPNKey(**new_key)
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create key: {str(e)}")
 
 @app.delete("/api/keys/{key_id}")
 async def delete_key(key_id: str, api_key: str = Depends(verify_api_key)):
-    """Удалить VPN ключ"""
+    """Удалить VPN ключ с освобождением порта"""
     try:
         # Загрузка ключей
         keys = load_keys()
@@ -246,29 +273,21 @@ async def delete_key(key_id: str, api_key: str = Depends(verify_api_key)):
         if not key_to_delete:
             raise HTTPException(status_code=404, detail="Key not found")
         
-        # Удаление ключа из списка (по ID)
+        # Удаление ключа из конфигурации Xray
+        if not remove_key_from_xray_config(key_to_delete["uuid"]):
+            raise HTTPException(status_code=500, detail="Failed to remove key from Xray config")
+        
+        # Освобождение порта
+        if not release_port_for_key(key_to_delete["uuid"]):
+            print(f"Warning: Failed to release port for UUID: {key_to_delete['uuid']}")
+        
+        # Удаление ключа из списка
         keys = [k for k in keys if k["id"] != key_to_delete["id"]]
         save_keys(keys)
-        
-        # Обновление конфигурации Xray
-        config = load_config()
-        config["inbounds"][0]["settings"]["clients"] = [
-            client for client in config["inbounds"][0]["settings"]["clients"]
-            if client["id"] != key_to_delete["uuid"]
-        ]
-        save_config(config)
-        
-        # Проверка и обновление настроек Reality
-        if not verify_reality_settings():
-            raise HTTPException(status_code=500, detail="Failed to verify Reality settings")
         
         # Перезапуск Xray
         if not restart_xray():
             raise HTTPException(status_code=500, detail="Failed to restart Xray service")
-        
-        # Проверка синхронизации конфигурации
-        if not verify_xray_config():
-            raise HTTPException(status_code=500, detail="Failed to synchronize Xray configuration")
         
         return {"message": "Key deleted successfully"}
         
@@ -282,6 +301,13 @@ async def list_keys(api_key: str = Depends(verify_api_key)):
     """Получить список всех VPN ключей"""
     try:
         keys = load_keys()
+        
+        # Добавляем информацию о портах для каждого ключа
+        for key in keys:
+            if "port" not in key:
+                port = get_port_for_key(key["uuid"])
+                key["port"] = port
+        
         return [VPNKey(**key) for key in keys]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load keys: {str(e)}")
@@ -314,11 +340,15 @@ async def get_key_config(key_id: str, api_key: str = Depends(verify_api_key)):
         if not key:
             raise HTTPException(status_code=404, detail="Key not found")
         
+        # Получение порта для ключа
+        port = get_port_for_key(key["uuid"])
+        
         # Генерация конфигурации клиента
         result = subprocess.run([
             '/root/vpn-server/generate_client_config.py',
             key["uuid"],
-            key["name"]
+            key["name"],
+            str(port) if port else "443"
         ], capture_output=True, text=True, check=True)
         
         return {
@@ -535,6 +565,219 @@ async def verify_reality_endpoint(api_key: str = Depends(verify_api_key)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to verify Reality settings: {str(e)}")
 
+# ===== НОВЫЕ ЭНДПОИНТЫ ДЛЯ СИСТЕМЫ ПОРТОВ =====
+
+@app.get("/api/system/ports")
+async def get_ports_status(api_key: str = Depends(verify_api_key)):
+    """Получить статус портов"""
+    try:
+        port_assignments = get_all_port_assignments()
+        used_count = port_manager.get_used_ports_count()
+        available_count = port_manager.get_available_ports_count()
+        
+        return {
+            "port_assignments": port_assignments,
+            "used_ports": used_count,
+            "available_ports": available_count,
+            "max_ports": 20,
+            "port_range": "10001-10020",
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get ports status: {str(e)}")
+
+@app.post("/api/system/ports/reset")
+async def reset_ports(api_key: str = Depends(verify_api_key)):
+    """Сбросить все порты"""
+    try:
+        if reset_all_ports():
+            return {
+                "message": "All ports reset successfully",
+                "status": "reset",
+                "timestamp": int(time.time())
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to reset ports")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset ports: {str(e)}")
+
+@app.get("/api/system/ports/status")
+async def get_ports_validation_status(api_key: str = Depends(verify_api_key)):
+    """Получить статус валидации портов"""
+    try:
+        validation = port_manager.validate_port_assignments()
+        return {
+            "validation": validation,
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get ports validation status: {str(e)}")
+
+# ===== ЭНДПОИНТЫ ТОЧНОГО МОНИТОРИНГА ТРАФИКА =====
+
+@app.get("/api/traffic/ports/exact")
+async def get_exact_ports_traffic(api_key: str = Depends(verify_api_key)):
+    """Получить точную статистику трафика по портам"""
+    try:
+        ports_traffic = get_all_ports_traffic_bytes()
+        system_summary = get_system_traffic_summary()
+        
+        return {
+            "ports_traffic": ports_traffic,
+            "system_summary": system_summary,
+            "source": "port_monitor",
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get exact ports traffic: {str(e)}")
+
+@app.get("/api/keys/{key_id}/traffic/port/exact")
+async def get_key_port_exact_traffic(key_id: str, api_key: str = Depends(verify_api_key)):
+    """Получить точную статистику трафика для ключа по порту"""
+    try:
+        keys = load_keys()
+        key = None
+        for k in keys:
+            if k["id"] == key_id or k["uuid"] == key_id:
+                key = k
+                break
+        
+        if not key:
+            raise HTTPException(status_code=404, detail="Key not found")
+        
+        if not key["is_active"]:
+            raise HTTPException(status_code=400, detail="Key is not active")
+        
+        # Получаем точную статистику трафика по порту
+        port_traffic = get_uuid_traffic_bytes(key["uuid"])
+        
+        return {
+            "key": VPNKey(**key),
+            "port_traffic": port_traffic,
+            "source": "port_monitor",
+            "timestamp": int(time.time())
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get key port exact traffic: {str(e)}")
+
+@app.post("/api/keys/{key_id}/traffic/port/reset")
+async def reset_key_port_traffic_stats(key_id: str, api_key: str = Depends(verify_api_key)):
+    """Сбросить статистику трафика для ключа по порту"""
+    try:
+        keys = load_keys()
+        key = None
+        for k in keys:
+            if k["id"] == key_id or k["uuid"] == key_id:
+                key = k
+                break
+        
+        if not key:
+            raise HTTPException(status_code=404, detail="Key not found")
+        
+        if not key["is_active"]:
+            raise HTTPException(status_code=400, detail="Key is not active")
+        
+        # Сброс статистики трафика по порту
+        success = reset_uuid_traffic_stats(key["uuid"])
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to reset port traffic stats")
+        
+        return {
+            "message": "Port traffic stats reset successfully",
+            "key_id": key_id,
+            "uuid": key["uuid"],
+            "port": key.get("port"),
+            "source": "port_monitor",
+            "timestamp": int(time.time())
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset port traffic: {str(e)}")
+
+@app.get("/api/system/traffic/summary")
+async def get_system_traffic_summary_endpoint(api_key: str = Depends(verify_api_key)):
+    """Получить сводку системного трафика"""
+    try:
+        summary = get_system_traffic_summary()
+        return {
+            "summary": summary,
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get system traffic summary: {str(e)}")
+
+# ===== ЭНДПОИНТЫ КОНФИГУРАЦИИ XRAY =====
+
+@app.get("/api/system/xray/config-status")
+async def get_xray_config_status_endpoint(api_key: str = Depends(verify_api_key)):
+    """Получить статус конфигурации Xray"""
+    try:
+        status = get_xray_config_status()
+        return {
+            "config_status": status,
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get Xray config status: {str(e)}")
+
+@app.post("/api/system/xray/sync-config")
+async def sync_xray_config_endpoint(api_key: str = Depends(verify_api_key)):
+    """Синхронизировать конфигурацию Xray с ключами"""
+    try:
+        keys = load_keys()
+        if update_xray_config_for_keys(keys):
+            # Перезапуск Xray
+            if not restart_xray():
+                raise HTTPException(status_code=500, detail="Failed to restart Xray service")
+            
+            return {
+                "message": "Xray configuration synchronized successfully",
+                "status": "synced",
+                "timestamp": int(time.time())
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to sync Xray configuration")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to sync Xray configuration: {str(e)}")
+
+@app.get("/api/system/xray/validate-sync")
+async def validate_xray_config_sync_endpoint(api_key: str = Depends(verify_api_key)):
+    """Валидировать синхронизацию конфигурации Xray"""
+    try:
+        keys = load_keys()
+        validation = validate_xray_config_sync(keys)
+        return {
+            "validation": validation,
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to validate Xray config sync: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    
+    # Настройки из переменных окружения
+    host = os.getenv("VPN_HOST", "0.0.0.0")
+    port = int(os.getenv("VPN_PORT", "8000"))
+    enable_https = os.getenv("VPN_ENABLE_HTTPS", "false").lower() == "true"
+    ssl_cert = os.getenv("VPN_SSL_CERT_PATH", "/etc/ssl/certs/vpn-api.crt")
+    ssl_key = os.getenv("VPN_SSL_KEY_PATH", "/etc/ssl/private/vpn-api.key")
+    
+    if enable_https and os.path.exists(ssl_cert) and os.path.exists(ssl_key):
+        print(f"🚀 Starting VPN API with HTTPS on {host}:{port}")
+        uvicorn.run(
+            app, 
+            host=host, 
+            port=port,
+            ssl_certfile=ssl_cert,
+            ssl_keyfile=ssl_key
+        )
+    else:
+        print(f"🚀 Starting VPN API with HTTP on {host}:{port}")
+        uvicorn.run(app, host=host, port=port) 

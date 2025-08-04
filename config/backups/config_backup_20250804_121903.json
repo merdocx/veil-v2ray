@@ -1,0 +1,104 @@
+{
+  "log": {
+    "loglevel": "debug",
+    "access": "/root/vpn-server/logs/access.log",
+    "error": "/root/vpn-server/logs/error.log"
+  },
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "services": [
+      "StatsService"
+    ]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserUplink": true,
+        "statsUserDownlink": true
+      }
+    }
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 10085,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1",
+        "port": 10085
+      },
+      "tag": "api"
+    },
+    {
+      "port": 443,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "8eeb1e1d-f98a-48a1-bab5-c6cdc9486c45",
+            "flow": "",
+            "email": "8eeb1e1d-f98a-48a1-bab5-c6cdc9486c45"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "AB3EmrERFcKKHiX9a90iB7YaQnFm7PXb8G8sZmUDZ3s",
+          "shortIds": [
+            "2eaf14b4"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-8eeb1e1d-f98a-48a1-bab5-c6cdc9486c45"
+    },
+    {
+      "port": 10001,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "8bf4567a-9037-42c2-a5e2-802973d623f8",
+            "flow": "",
+            "email": "8bf4567a-9037-42c2-a5e2-802973d623f8"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "mBa_IDJe2Zf7SFHs6InvdDwFvlp0NVj7c6WSVwIQhF0",
+          "shortIds": [
+            "1fac6200"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-8bf4567a-9037-42c2-a5e2-802973d623f8"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    }
+  ]
+}

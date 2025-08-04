@@ -7,6 +7,7 @@ Type=simple
 User=root
 WorkingDirectory=/root/vpn-server
 Environment=PATH=/root/vpn-server/venv/bin
+EnvironmentFile=/root/vpn-server/.env
 ExecStart=/root/vpn-server/venv/bin/python /root/vpn-server/api.py
 Restart=always
 RestartSec=10

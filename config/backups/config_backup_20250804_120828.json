@@ -1,0 +1,168 @@
+{
+  "log": {
+    "loglevel": "debug",
+    "access": "/root/vpn-server/logs/access.log",
+    "error": "/root/vpn-server/logs/error.log"
+  },
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "services": [
+      "StatsService"
+    ]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserUplink": true,
+        "statsUserDownlink": true
+      }
+    }
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 10085,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1",
+        "port": 10085
+      },
+      "tag": "api"
+    },
+    {
+      "port": 10001,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "39d0f82e-a828-4115-b02c-5acfa6d79bca",
+            "flow": "",
+            "email": "39d0f82e-a828-4115-b02c-5acfa6d79bca"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "GcPL7GYwxpFipsYrtfHGp7nEDg5YnXZ8SjsFMiszd8S",
+          "shortIds": [
+            "aaeebbda"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-39d0f82e-a828-4115-b02c-5acfa6d79bca"
+    },
+    {
+      "port": 10002,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "35e6b257-4fee-4469-b2d2-cff06eb94f14",
+            "flow": "",
+            "email": "35e6b257-4fee-4469-b2d2-cff06eb94f14"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "PNowg3fYmvIPuAhXFq4C2Zr3hFPJOgSSt1cRKoIEFX2",
+          "shortIds": [
+            "cb1846a8"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-35e6b257-4fee-4469-b2d2-cff06eb94f14"
+    },
+    {
+      "port": 10003,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "39edb287-1e7a-444d-89b3-c333b5accc81",
+            "flow": "",
+            "email": "39edb287-1e7a-444d-89b3-c333b5accc81"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "plDaWmPUpDYXoQeamK559luQt60cQfCJbIuEaMvaCqH",
+          "shortIds": [
+            "2cdee9ce"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-39edb287-1e7a-444d-89b3-c333b5accc81"
+    },
+    {
+      "port": 10004,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "3a37db87-24ac-4437-a496-524661473e4e",
+            "flow": "",
+            "email": "3a37db87-24ac-4437-a496-524661473e4e"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "KJghFCjCYxcvPrappHsFwCkDkvm-SM3TqcIT_cHEeQk",
+          "shortIds": [
+            "8a7e5ace"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-3a37db87-24ac-4437-a496-524661473e4e"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    }
+  ]
+}

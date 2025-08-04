@@ -2,6 +2,7 @@
 config/keys.env
 config/keys.json
 config/config.json
+.env
 
 # Логи
 logs/

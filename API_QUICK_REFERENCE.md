@@ -1,180 +1,236 @@
 # 📋 Краткая справка API VPN сервера
 
 ## 🔐 Аутентификация
-**API ключ:** `QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=`  
-**Заголовок:** `X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=`
+**API ключ загружается из переменных окружения**  
+**Заголовок:** `X-API-Key: YOUR_API_KEY`
 
 ## 🌐 Базовый URL
 ```
-http://veil-bird.ru/api
+https://veil-bird.ru/api
+```
+
+### 🔑 Получение API ключа
+API ключ хранится в файле `/root/vpn-server/.env` в переменной `VPN_API_KEY`.
+
+Для генерации нового API ключа:
+```bash
+python3 /root/vpn-server/generate_api_key.py
 ```
 
 ---
 
 ## 🔑 Управление ключами
 
-### Создание ключа
+### Создание ключа (с назначением порта)
 ```bash
-curl -X POST "http://veil-bird.ru/api/keys" \
+curl -X POST "https://veil-bird.ru/api/keys" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
+  -H "X-API-Key: YOUR_API_KEY" \
   -d '{"name": "Мой ключ"}'
 ```
 
-### Список ключей
+### Список ключей (с информацией о портах)
 ```bash
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys"
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/keys"
 ```
 
 ### Информация о ключе (ID или UUID)
 ```bash
-# По ID
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_id}"
-
-# По UUID
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_uuid}"
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/keys/{key_id}"
 ```
 
 ### Удаление ключа (ID или UUID)
 ```bash
-# По ID
-curl -X DELETE -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_id}"
-
-# По UUID
-curl -X DELETE -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_uuid}"
+curl -X DELETE -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/keys/{key_id}"
 ```
 
 ### Конфигурация клиента (ID или UUID)
 ```bash
-# По ID
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_id}/config"
-
-# По UUID
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_uuid}/config"
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/keys/{key_id}/config"
 ```
 
 ---
 
-## 📊 Мониторинг трафика
+## 📊 Точный мониторинг трафика (100% точность)
 
-### Общая статистика
+### Общая статистика по портам
 ```bash
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/traffic/exact"
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/traffic/ports/exact"
 ```
 
-### Статистика ключа (ID или UUID)
+### Статистика ключа по порту (ID или UUID)
 ```bash
-# По ID
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_id}/traffic/exact"
-
-# По UUID
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_uuid}/traffic/exact"
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/keys/{key_id}/traffic/port/exact"
 ```
 
-### Статус системы
+### Сброс статистики ключа (ID или UUID)
 ```bash
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/traffic/status"
+curl -X POST -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/keys/{key_id}/traffic/port/reset"
 ```
 
-### Сброс статистики (ID или UUID)
+### Системная сводка трафика
 ```bash
-# По ID
-curl -X POST -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_id}/traffic/reset"
-
-# По UUID
-curl -X POST -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/keys/{key_uuid}/traffic/reset"
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/traffic/summary"
 ```
 
 ---
 
-## 🏠 Системные эндпоинты
+## 🔌 Управление портами
 
-### Информация об API
+### Статус портов
 ```bash
-curl "http://veil-bird.ru/api/"
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/ports"
+```
+
+### Сброс всех портов
+```bash
+curl -X POST -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/ports/reset"
+```
+
+### Валидация портов
+```bash
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/ports/status"
+```
+
+---
+
+## ⚙️ Управление конфигурацией Xray
+
+### Статус конфигурации Xray
+```bash
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/xray/config-status"
+```
+
+### Синхронизация конфигурации
+```bash
+curl -X POST -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/xray/sync-config"
+```
+
+### Валидация синхронизации
+```bash
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/xray/validate-sync"
+```
+
+---
+
+## 📊 Устаревшие эндпоинты (для совместимости)
+
+### Приблизительная статистика
+```bash
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/traffic/exact"
+```
+
+### Приблизительная статистика ключа
+```bash
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/keys/{key_id}/traffic/exact"
+```
+
+---
+
+## 🔧 Системные эндпоинты
+
+### Проверка Reality настроек
+```bash
+curl -X POST -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/verify-reality"
+```
+
+### Синхронизация конфигурации
+```bash
+curl -X POST -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/sync-config"
 ```
 
 ### Статус синхронизации
 ```bash
-curl -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/system/config-status"
-```
-
-### Принудительная синхронизация
-```bash
-curl -X POST -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/system/sync-config"
-```
-
-### Проверка Reality настроек
-```bash
-curl -X POST -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  "http://veil-bird.ru/api/system/verify-reality"
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://veil-bird.ru/api/system/config-status"
 ```
 
 ---
 
-## 📊 Коды ответов
-- `200` - Успешно
-- `400` - Неверный запрос
-- `401` - Неавторизован
-- `404` - Не найдено
-- `500` - Ошибка сервера
+## 📝 Быстрые примеры
 
----
-
-## 🎯 Быстрый старт
-
-### 1. Создать ключ
+### Создание ключа и получение конфигурации
 ```bash
-KEY_RESPONSE=$(curl -s -X POST "http://veil-bird.ru/api/keys" \
+# Создаем ключ
+KEY_RESPONSE=$(curl -s -X POST "https://veil-bird.ru/api/keys" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=" \
-  -d '{"name": "Мой ключ"}')
-```
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{"name": "Мой VPN ключ"}')
 
-### 2. Получить ID и UUID
-```bash
+# Извлекаем ID и UUID
 KEY_ID=$(echo $KEY_RESPONSE | python3 -c "import json, sys; print(json.load(sys.stdin)['id'])")
 KEY_UUID=$(echo $KEY_RESPONSE | python3 -c "import json, sys; print(json.load(sys.stdin)['uuid'])")
+
+# Получаем конфигурацию клиента
+curl -s -X GET "https://veil-bird.ru/api/keys/$KEY_ID/config" \
+  -H "X-API-Key: YOUR_API_KEY" | \
+  python3 -c "import json, sys; print(json.load(sys.stdin)['client_config'])"
 ```
 
-### 3. Получить конфигурацию
+### Мониторинг трафика
 ```bash
-curl -s "http://veil-bird.ru/api/keys/$KEY_ID/config" | python3 -m json.tool
+# Получаем общую статистику трафика
+curl -s -X GET "https://veil-bird.ru/api/traffic/ports/exact" \
+  -H "X-API-Key: YOUR_API_KEY"
+
+# Получаем трафик конкретного ключа
+curl -s -X GET "https://veil-bird.ru/api/keys/$KEY_ID/traffic/port/exact" \
+  -H "X-API-Key: YOUR_API_KEY"
 ```
 
-### 4. Проверить трафик
+### Управление портами
 ```bash
-curl -s "http://veil-bird.ru/api/keys/$KEY_ID/traffic/exact" | python3 -m json.tool
+# Проверяем статус портов
+curl -s -X GET "https://veil-bird.ru/api/system/ports" \
+  -H "X-API-Key: YOUR_API_KEY"
+
+# Сбрасываем статистику трафика
+curl -s -X POST "https://veil-bird.ru/api/keys/$KEY_ID/traffic/port/reset" \
+  -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ---
 
-## 📈 Точность мониторинга
-- **Общий трафик**: 100%
-- **Подключения**: ~95%
-- **По пользователям**: ~80-85%
-- **Метод**: network_distribution
+## 🎯 Особенности новой системы
 
-## 🆕 Новые возможности
-- **Автоматическая проверка Reality настроек**
-- **Предотвращение проблем с подключением**
-- **Улучшенная синхронизация**
-- **Диагностические эндпоинты**
+### Преимущества системы с индивидуальными портами:
+- ✅ **100% точность** мониторинга трафика
+- 🔌 **Индивидуальные порты** для каждого ключа (10001-10020)
+- 🛡️ **Полная изоляция** трафика пользователей
+- 📊 **Упрощенная диагностика** проблем
+- ⚡ **Масштабируемость** до 20 ключей
 
-**Версия**: 1.0.0  
-**Обновлено**: 2025-08-03 
+### Новые возможности:
+- 🔍 **Точный мониторинг** трафика по портам
+- 📈 **Детальная статистика** для каждого ключа
+- 🔄 **Автоматическое управление** портами
+- 🛠️ **Простое управление** через API
+- 📚 **Полная документация** системы
+
+---
+
+## 📞 Поддержка
+
+При возникновении проблем с API обращайтесь к документации системы или создайте issue в репозитории проекта.
+
+**Версия API:** 1.0.0  
+**Дата обновления:** 4 августа 2025  
+**Статус:** ✅ Актуально 

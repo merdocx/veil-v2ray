@@ -1,0 +1,21 @@
+{
+  "used_ports": {
+    "10001": {
+      "uuid": "f0f92e0a-a376-4a46-a72a-7176ea34949e",
+      "key_id": "018569e3-c0bc-432f-a487-30156d7c35c4",
+      "key_name": "nvipetrenko@gmail.con",
+      "assigned_at": "2025-08-04T14:11:18.637234",
+      "is_active": true
+    }
+  },
+  "port_assignments": {
+    "f0f92e0a-a376-4a46-a72a-7176ea34949e": {
+      "port": 10001,
+      "key_id": "018569e3-c0bc-432f-a487-30156d7c35c4",
+      "key_name": "nvipetrenko@gmail.con",
+      "assigned_at": "2025-08-04T14:11:18.637254"
+    }
+  },
+  "created_at": "2025-08-04T12:24:35.028840",
+  "last_updated": "2025-08-04T14:11:18.637258"
+}
