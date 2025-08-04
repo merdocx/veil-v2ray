@@ -1,21 +1,21 @@
 {
   "used_ports": {
     "10001": {
-      "uuid": "f0f92e0a-a376-4a46-a72a-7176ea34949e",
-      "key_id": "018569e3-c0bc-432f-a487-30156d7c35c4",
+      "uuid": "e9828d67-08e2-4942-815d-61f41b3dacf7",
+      "key_id": "24f13577-2075-4ba0-9c32-47be7d320646",
       "key_name": "nvipetrenko@gmail.con",
-      "assigned_at": "2025-08-04T14:11:18.637234",
+      "assigned_at": "2025-08-04T14:34:13.877963",
       "is_active": true
     }
   },
   "port_assignments": {
-    "f0f92e0a-a376-4a46-a72a-7176ea34949e": {
+    "e9828d67-08e2-4942-815d-61f41b3dacf7": {
       "port": 10001,
-      "key_id": "018569e3-c0bc-432f-a487-30156d7c35c4",
+      "key_id": "24f13577-2075-4ba0-9c32-47be7d320646",
       "key_name": "nvipetrenko@gmail.con",
-      "assigned_at": "2025-08-04T14:11:18.637254"
+      "assigned_at": "2025-08-04T14:34:13.877978"
     }
   },
   "created_at": "2025-08-04T12:24:35.028840",
-  "last_updated": "2025-08-04T14:11:18.637258"
+  "last_updated": "2025-08-04T14:34:13.877982"
 }

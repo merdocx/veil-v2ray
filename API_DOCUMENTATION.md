@@ -193,69 +193,66 @@ curl -X GET "https://veil-bird.ru/api/keys/84570736-8bf5-47af-92d4-3a08f2693ef8/
 
 ## 📊 Мониторинг трафика
 
-### 1. Получение точной статистики трафика
-**GET** `/api/traffic/ports/exact`
+### 1. Получение трафика для всех ключей
+**GET** `/api/traffic/simple`
 
-Возвращает точную статистику трафика по всем портам с 100% точностью.
+Возвращает статистику трафика для всех активных ключей на основе активных соединений.
 
 #### Ответ:
 ```json
 {
-  "ports_traffic": {
-    "total_ports": 2,
-    "ports_traffic": {
-      "44ed718f-9f5d-4bd9-8585-e5a875cd3858": {
+  "status": "success",
+  "data": {
+    "ports": {
+      "10001": {
         "port": 10001,
-        "key_name": "Мой VPN ключ",
-        "traffic": {
-          "port": 10001,
-          "connections": 2,
-          "total_bytes": 1048576,
-          "total_formatted": "1.0 MB",
-          "rx_bytes": 524288,
-          "tx_bytes": 524288,
-          "rx_formatted": "512.0 KB",
-          "tx_formatted": "512.0 KB",
-          "timestamp": 1234567890
-        }
+        "connections": 37,
+        "total_bytes": 33323549,
+        "rx_bytes": 16661774,
+        "tx_bytes": 16661774,
+        "total_formatted": "31.78 MB",
+        "rx_formatted": "15.89 MB",
+        "tx_formatted": "15.89 MB",
+        "traffic_rate": 134128.74,
+        "interface_traffic": {
+          "rx_bytes": 5754086174,
+          "tx_bytes": 5486110273,
+          "total_bytes": 11240196447,
+          "timestamp": 1754307939.2700043
+        },
+        "connection_details": [
+          {
+            "local": "[::ffff:146.103.100.14]:10001",
+            "remote": "[::ffff:109.252.116.174]:1896",
+            "state": "ESTAB"
+          }
+        ],
+        "timestamp": 1754307939.2557962,
+        "source": "simple_monitor",
+        "method": "connection_based_estimation",
+        "uuid": "e9828d67-08e2-4942-815d-61f41b3dacf7"
       }
     },
-    "total_traffic": 1048576,
-    "total_connections": 2,
-    "total_traffic_formatted": "1.0 MB"
+    "total_connections": 37,
+    "total_bytes": 33323549,
+    "timestamp": 1754307939.2557921
   },
-  "system_summary": {
-    "total_system_traffic": 10485760,
-    "total_system_traffic_formatted": "10.0 MB",
-    "active_ports": 2,
-    "interface_summary": {
-      "ens3": {
-        "rx_bytes": 5242880,
-        "tx_bytes": 5242880,
-        "total_bytes": 10485760,
-        "rx_formatted": "5.0 MB",
-        "tx_formatted": "5.0 MB",
-        "total_formatted": "10.0 MB"
-      }
-    }
-  },
-  "source": "port_monitor",
-  "timestamp": 1234567890
+  "timestamp": "2025-08-04T14:45:39.255792"
 }
 ```
 
 #### Пример:
 ```bash
-curl -X GET "https://veil-bird.ru/api/traffic/ports/exact" \
+curl -X GET "https://veil-bird.ru/api/traffic/simple" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ---
 
-### 2. Получение трафика конкретного ключа
-**GET** `/api/keys/{key_id}/traffic/port/exact`
+### 2. Получение трафика для конкретного ключа
+**GET** `/api/keys/{key_id}/traffic/simple`
 
-Возвращает точную статистику трафика для конкретного ключа по его порту.
+Возвращает статистику трафика для конкретного ключа на основе активных соединений.
 
 #### Параметры:
 - `key_id` - ID или UUID ключа
@@ -263,40 +260,57 @@ curl -X GET "https://veil-bird.ru/api/traffic/ports/exact" \
 #### Ответ:
 ```json
 {
+  "status": "success",
   "key": {
-    "id": "84570736-8bf5-47af-92d4-3a08f2693ef8",
-    "name": "Мой VPN ключ",
-    "uuid": "44ed718f-9f5d-4bd9-8585-e5a875cd3858",
-    "created_at": "2025-08-02T15:22:39.822640",
+    "id": "11461131-0644-438d-9429-cb5e7f60fd80",
+    "name": "nvipetrenko@gmail.con",
+    "uuid": "e9828d67-08e2-4942-815d-61f41b3dacf7",
+    "created_at": "2025-08-04T14:34:13.878594",
     "is_active": true,
     "port": 10001
   },
-  "port_traffic": {
+  "traffic": {
     "port": 10001,
-    "connections": 2,
-    "total_bytes": 1048576,
-    "rx_bytes": 524288,
-    "tx_bytes": 524288,
-    "total_formatted": "1.0 MB",
-    "rx_formatted": "512.0 KB",
-    "tx_formatted": "512.0 KB",
-    "timestamp": 1234567890
+    "connections": 37,
+    "total_bytes": 33323549,
+    "rx_bytes": 16661774,
+    "tx_bytes": 16661774,
+    "total_formatted": "31.78 MB",
+    "rx_formatted": "15.89 MB",
+    "tx_formatted": "15.89 MB",
+    "traffic_rate": 134128.74,
+    "interface_traffic": {
+      "rx_bytes": 5754086174,
+      "tx_bytes": 5486110273,
+      "total_bytes": 11240196447,
+      "timestamp": 1754307939.2700043
+    },
+    "connection_details": [
+      {
+        "local": "[::ffff:146.103.100.14]:10001",
+        "remote": "[::ffff:109.252.116.174]:1896",
+        "state": "ESTAB"
+      }
+    ],
+    "timestamp": 1754307939.2557962,
+    "source": "simple_monitor",
+    "method": "connection_based_estimation",
+    "uuid": "e9828d67-08e2-4942-815d-61f41b3dacf7"
   },
-  "source": "port_monitor",
-  "timestamp": 1234567890
+  "timestamp": "2025-08-04T14:45:39.255792"
 }
 ```
 
 #### Пример:
 ```bash
-curl -X GET "https://veil-bird.ru/api/keys/84570736-8bf5-47af-92d4-3a08f2693ef8/traffic/port/exact" \
+curl -X GET "https://veil-bird.ru/api/keys/11461131-0644-438d-9429-cb5e7f60fd80/traffic/simple" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ---
 
-### 3. Сброс статистики трафика ключа
-**POST** `/api/keys/{key_id}/traffic/port/reset`
+### 3. Сброс статистики трафика для ключа
+**POST** `/api/keys/{key_id}/traffic/simple/reset`
 
 Сбрасывает статистику трафика для конкретного ключа.
 
@@ -306,18 +320,16 @@ curl -X GET "https://veil-bird.ru/api/keys/84570736-8bf5-47af-92d4-3a08f2693ef8/
 #### Ответ:
 ```json
 {
-  "message": "Port traffic stats reset successfully",
-  "key_id": "84570736-8bf5-47af-92d4-3a08f2693ef8",
-  "uuid": "44ed718f-9f5d-4bd9-8585-e5a875cd3858",
-  "port": 10001,
-  "source": "port_monitor",
-  "timestamp": 1234567890
+  "status": "success",
+  "message": "Traffic stats reset successfully",
+  "key_id": "11461131-0644-438d-9429-cb5e7f60fd80",
+  "timestamp": "2025-08-04T14:45:39.255792"
 }
 ```
 
 #### Пример:
 ```bash
-curl -X POST "https://veil-bird.ru/api/keys/84570736-8bf5-47af-92d4-3a08f2693ef8/traffic/port/reset" \
+curl -X POST "https://veil-bird.ru/api/keys/11461131-0644-438d-9429-cb5e7f60fd80/traffic/simple/reset" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -553,74 +565,7 @@ curl -X GET "https://veil-bird.ru/api/system/xray/validate-sync" \
 
 ---
 
-## 📊 Устаревшие эндпоинты (для совместимости)
 
-### 1. Получение приблизительной статистики трафика
-**GET** `/api/traffic/exact`
-
-Возвращает приблизительную статистику трафика (устаревший метод).
-
-#### Ответ:
-```json
-{
-  "total_keys": 1,
-  "active_keys": 1,
-  "traffic_stats": {
-    "44ed718f-9f5d-4bd9-8585-e5a875cd3858": {
-      "total_bytes": 1048576,
-      "total_formatted": "1.0 MB",
-      "connections": 2,
-      "source": "xray_api"
-    }
-  },
-  "source": "xray_api"
-}
-```
-
-#### Пример:
-```bash
-curl -X GET "https://veil-bird.ru/api/traffic/exact" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
-
----
-
-### 2. Получение приблизительной статистики ключа
-**GET** `/api/keys/{key_id}/traffic/exact`
-
-Возвращает приблизительную статистику трафика для ключа (устаревший метод).
-
-#### Параметры:
-- `key_id` - ID или UUID ключа
-
-#### Ответ:
-```json
-{
-  "key": {
-    "id": "84570736-8bf5-47af-92d4-3a08f2693ef8",
-    "name": "Мой VPN ключ",
-    "uuid": "44ed718f-9f5d-4bd9-8585-e5a875cd3858",
-    "created_at": "2025-08-02T15:22:39.822640",
-    "is_active": true,
-    "port": 10001
-  },
-  "traffic_bytes": {
-    "total_bytes": 1048576,
-    "total_formatted": "1.0 MB",
-    "connections": 2,
-    "source": "precise_monitor"
-  },
-  "source": "precise_monitor"
-}
-```
-
-#### Пример:
-```bash
-curl -X GET "https://veil-bird.ru/api/keys/84570736-8bf5-47af-92d4-3a08f2693ef8/traffic/exact" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
-
----
 
 ## 🔧 Системные эндпоинты
 
@@ -716,11 +661,11 @@ curl -s -X GET "https://veil-bird.ru/api/keys/$KEY_ID/config" \
 ### Мониторинг трафика
 ```bash
 # Получаем общую статистику трафика
-curl -s -X GET "https://veil-bird.ru/api/traffic/ports/exact" \
+curl -s -X GET "https://veil-bird.ru/api/traffic/simple" \
   -H "X-API-Key: YOUR_API_KEY"
 
 # Получаем трафик конкретного ключа
-curl -s -X GET "https://veil-bird.ru/api/keys/$KEY_ID/traffic/port/exact" \
+curl -s -X GET "https://veil-bird.ru/api/keys/$KEY_ID/traffic/simple" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -731,27 +676,30 @@ curl -s -X GET "https://veil-bird.ru/api/system/ports" \
   -H "X-API-Key: YOUR_API_KEY"
 
 # Сбрасываем статистику трафика
-curl -s -X POST "https://veil-bird.ru/api/keys/$KEY_ID/traffic/port/reset" \
+curl -s -X POST "https://veil-bird.ru/api/keys/$KEY_ID/traffic/simple/reset" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ---
 
-## 🎯 Особенности новой системы
+## 🎯 Особенности системы мониторинга
 
-### Преимущества системы с индивидуальными портами:
-- ✅ **100% точность** мониторинга трафика
-- 🔌 **Индивидуальные порты** для каждого ключа (10001-10020)
-- 🛡️ **Полная изоляция** трафика пользователей
-- 📊 **Упрощенная диагностика** проблем
-- ⚡ **Масштабируемость** до 20 ключей
+### Преимущества простого мониторинга:
+- ✅ **Надежность** - основан на активных соединениях
+- 🔍 **Точность** - отслеживает реальные соединения
+- ⚡ **Производительность** - кэширование 30 секунд
+- 📊 **Детализация** - показывает состояния соединений
+- 🛠️ **Простота** - один метод для всех случаев
 
-### Новые возможности:
-- 🔍 **Точный мониторинг** трафика по портам
-- 📈 **Детальная статистика** для каждого ключа
-- 🔄 **Автоматическое управление** портами
-- 🛠️ **Простое управление** через API
-- 📚 **Полная документация** системы
+### Поддерживаемые состояния соединений:
+- **ESTAB** - установленные соединения
+- **LAST-ACK** - завершающиеся соединения  
+- **CLOSE-WAIT** - ожидающие закрытия
+
+### Метод оценки трафика:
+- **connection_based_estimation** - оценка на основе количества соединений
+- **interface_traffic** - общий трафик интерфейса
+- **traffic_rate** - скорость трафика в байтах/сек
 
 ---
 
@@ -759,6 +707,6 @@ curl -s -X POST "https://veil-bird.ru/api/keys/$KEY_ID/traffic/port/reset" \
 
 При возникновении проблем с API обращайтесь к документации системы или создайте issue в репозитории проекта.
 
-**Версия API:** 1.0.0  
+**Версия API:** 2.0.0  
 **Дата обновления:** 4 августа 2025  
-**Статус:** ✅ Актуально 
+**Статус:** ✅ Актуально (обновлено - удалены устаревшие endpoints) 

@@ -23,12 +23,9 @@ def load_env_file():
 load_env_file()
 
 # Импорт модулей для мониторинга
-from alternative_traffic_monitor import get_key_traffic_bytes, get_all_keys_traffic_bytes, reset_key_traffic_stats
-
-# Импорт новой системы мониторинга
 from port_manager import port_manager, assign_port_for_key, release_port_for_key, get_port_for_key, get_all_port_assignments, reset_all_ports
 from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync
-from port_traffic_monitor import port_traffic_monitor, get_uuid_traffic_bytes, get_all_ports_traffic_bytes, reset_uuid_traffic_stats, get_system_traffic_summary
+from simple_traffic_monitor import get_simple_uuid_traffic, get_simple_all_ports_traffic, reset_simple_uuid_traffic
 
 app = FastAPI(title="VPN Key Management API", version="1.0.0")
 
@@ -367,103 +364,7 @@ async def get_key_config(key_id: str, api_key: str = Depends(verify_api_key)):
 
 # ===== ЭНДПОИНТЫ ТОЧНОГО ПОДСЧЕТА ТРАФИКА ЧЕРЕЗ XRAY API =====
 
-@app.get("/api/traffic/exact")
-async def get_exact_traffic(api_key: str = Depends(verify_api_key)):
-    """Получить точную статистику трафика через Xray API"""
-    try:
-        keys = load_keys()
-        active_keys = [k for k in keys if k["is_active"]]
-        
-        # Новая система мониторинга всегда доступна
-        
-        # Получаем точную статистику всех ключей
-        all_stats = get_all_keys_traffic_bytes()
-        
-        if "error" in all_stats:
-            raise HTTPException(status_code=500, detail=all_stats["error"])
-        
-        # Добавляем информацию о ключах
-        result = {
-            "total_keys": len(keys),
-            "active_keys": len(active_keys),
-            "traffic_stats": all_stats,
-            "source": "xray_api"
-        }
-        
-        return result
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get exact traffic: {str(e)}")
 
-@app.get("/api/keys/{key_id}/traffic/exact")
-async def get_key_exact_traffic(key_id: str, api_key: str = Depends(verify_api_key)):
-    """Получить точную статистику трафика для конкретного ключа через Xray API"""
-    try:
-        keys = load_keys()
-        key = None
-        for k in keys:
-            if k["id"] == key_id or k["uuid"] == key_id:
-                key = k
-                break
-        
-        if not key:
-            raise HTTPException(status_code=404, detail="Key not found")
-        
-        if not key["is_active"]:
-            raise HTTPException(status_code=400, detail="Key is not active")
-        
-        # Новая система мониторинга всегда доступна
-        
-        # Получаем точную статистику трафика
-        traffic_bytes = get_key_traffic_bytes(key["uuid"])
-        
-        return {
-            "key": VPNKey(**key),
-            "traffic_bytes": traffic_bytes,
-            "source": "precise_monitor"
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get key exact traffic: {str(e)}")
-
-@app.post("/api/keys/{key_id}/traffic/reset")
-async def reset_key_traffic_stats(key_id: str, api_key: str = Depends(verify_api_key)):
-    """Сбросить статистику трафика для ключа через Xray API"""
-    try:
-        keys = load_keys()
-        key = None
-        for k in keys:
-            if k["id"] == key_id or k["uuid"] == key_id:
-                key = k
-                break
-        
-        if not key:
-            raise HTTPException(status_code=404, detail="Key not found")
-        
-        if not key["is_active"]:
-            raise HTTPException(status_code=400, detail="Key is not active")
-        
-        # Сброс статистики через новую систему
-        success = reset_key_traffic_stats(key["uuid"])
-        
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to reset traffic stats")
-        
-        return {
-            "message": "Traffic stats reset successfully",
-            "key_id": key_id,
-            "uuid": key["uuid"],
-            "source": "precise_monitor"
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to reset traffic: {str(e)}")
 
 @app.get("/api/traffic/status")
 async def get_traffic_status(api_key: str = Depends(verify_api_key)):
@@ -613,92 +514,7 @@ async def get_ports_validation_status(api_key: str = Depends(verify_api_key)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get ports validation status: {str(e)}")
 
-# ===== ЭНДПОИНТЫ ТОЧНОГО МОНИТОРИНГА ТРАФИКА =====
 
-@app.get("/api/traffic/ports/exact")
-async def get_exact_ports_traffic(api_key: str = Depends(verify_api_key)):
-    """Получить точную статистику трафика по портам"""
-    try:
-        ports_traffic = get_all_ports_traffic_bytes()
-        system_summary = get_system_traffic_summary()
-        
-        return {
-            "ports_traffic": ports_traffic,
-            "system_summary": system_summary,
-            "source": "port_monitor",
-            "timestamp": int(time.time())
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get exact ports traffic: {str(e)}")
-
-@app.get("/api/keys/{key_id}/traffic/port/exact")
-async def get_key_port_exact_traffic(key_id: str, api_key: str = Depends(verify_api_key)):
-    """Получить точную статистику трафика для ключа по порту"""
-    try:
-        keys = load_keys()
-        key = None
-        for k in keys:
-            if k["id"] == key_id or k["uuid"] == key_id:
-                key = k
-                break
-        
-        if not key:
-            raise HTTPException(status_code=404, detail="Key not found")
-        
-        if not key["is_active"]:
-            raise HTTPException(status_code=400, detail="Key is not active")
-        
-        # Получаем точную статистику трафика по порту
-        port_traffic = get_uuid_traffic_bytes(key["uuid"])
-        
-        return {
-            "key": VPNKey(**key),
-            "port_traffic": port_traffic,
-            "source": "port_monitor",
-            "timestamp": int(time.time())
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get key port exact traffic: {str(e)}")
-
-@app.post("/api/keys/{key_id}/traffic/port/reset")
-async def reset_key_port_traffic_stats(key_id: str, api_key: str = Depends(verify_api_key)):
-    """Сбросить статистику трафика для ключа по порту"""
-    try:
-        keys = load_keys()
-        key = None
-        for k in keys:
-            if k["id"] == key_id or k["uuid"] == key_id:
-                key = k
-                break
-        
-        if not key:
-            raise HTTPException(status_code=404, detail="Key not found")
-        
-        if not key["is_active"]:
-            raise HTTPException(status_code=400, detail="Key is not active")
-        
-        # Сброс статистики трафика по порту
-        success = reset_uuid_traffic_stats(key["uuid"])
-        
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to reset port traffic stats")
-        
-        return {
-            "message": "Port traffic stats reset successfully",
-            "key_id": key_id,
-            "uuid": key["uuid"],
-            "port": key.get("port"),
-            "source": "port_monitor",
-            "timestamp": int(time.time())
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to reset port traffic: {str(e)}")
 
 @app.get("/api/system/traffic/summary")
 async def get_system_traffic_summary_endpoint(api_key: str = Depends(verify_api_key)):
@@ -758,6 +574,71 @@ async def validate_xray_config_sync_endpoint(api_key: str = Depends(verify_api_k
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to validate Xray config sync: {str(e)}")
+
+# ===== ЭНДПОИНТЫ ТОЧНОГО МОНИТОРИНГА ТРАФИКА =====
+
+@app.get("/api/traffic/simple")
+async def get_simple_traffic(api_key: str = Depends(verify_api_key)):
+    """Получение простого трафика для всех портов"""
+    try:
+        result = get_simple_all_ports_traffic()
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Simple traffic error: {str(e)}")
+
+@app.get("/api/keys/{key_id}/traffic/simple")
+async def get_key_simple_traffic(key_id: str, api_key: str = Depends(verify_api_key)):
+    """Получение простого трафика для конкретного ключа"""
+    try:
+        # Находим UUID по key_id
+        keys = load_keys()
+        key = next((k for k in keys if k["id"] == key_id), None)
+        
+        if not key:
+            raise HTTPException(status_code=404, detail="Key not found")
+        
+        uuid = key["uuid"]
+        result = get_simple_uuid_traffic(uuid)
+        
+        return {
+            "status": "success",
+            "key": key,
+            "traffic": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Simple traffic error: {str(e)}")
+
+@app.post("/api/keys/{key_id}/traffic/simple/reset")
+async def reset_key_simple_traffic(key_id: str, api_key: str = Depends(verify_api_key)):
+    """Сброс простой статистики трафика для ключа"""
+    try:
+        # Находим UUID по key_id
+        keys = load_keys()
+        key = next((k for k in keys if k["id"] == key_id), None)
+        
+        if not key:
+            raise HTTPException(status_code=404, detail="Key not found")
+        
+        uuid = key["uuid"]
+        result = reset_simple_uuid_traffic(uuid)
+        
+        return {
+            "status": "success" if result else "error",
+            "message": "Traffic stats reset successfully" if result else "Failed to reset traffic stats",
+            "key_id": key_id,
+            "timestamp": datetime.now().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reset error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
