@@ -34,7 +34,9 @@ CONFIG_FILE = "/root/vpn-server/config/config.json"
 KEYS_FILE = "/root/vpn-server/config/keys.json"
 
 # API ключ для аутентификации - загружается из переменных окружения
-API_KEY = os.getenv("VPN_API_KEY", "QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=")
+API_KEY = os.getenv("VPN_API_KEY")
+if not API_KEY:
+    raise ValueError("VPN_API_KEY environment variable is required")
 
 class VPNKey(BaseModel):
     id: str

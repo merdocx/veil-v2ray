@@ -19,7 +19,9 @@ from port_traffic_monitor import port_traffic_monitor
 
 # Конфигурация API
 API_BASE_URL = "http://localhost:8000"
-API_KEY = "QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM="
+API_KEY = os.getenv("VPN_API_KEY")
+if not API_KEY:
+    raise ValueError("VPN_API_KEY environment variable is required")
 
 def make_api_request(endpoint, method="GET", data=None):
     """Выполнение запроса к API"""

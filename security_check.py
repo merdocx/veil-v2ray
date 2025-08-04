@@ -76,7 +76,7 @@ def check_api_https():
         # Проверяем локальный HTTPS
         response = requests.get(
             "https://localhost:8000/api/keys",
-            headers={"X-API-Key": os.getenv("VPN_API_KEY", "QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=")},
+            headers={"X-API-Key": os.getenv("VPN_API_KEY")},
             verify=False,
             timeout=5
         )
@@ -100,7 +100,7 @@ def check_nginx_https():
         # Проверяем внешний HTTPS через Nginx
         response = requests.get(
             "https://veil-bird.ru/api/keys",
-            headers={"X-API-Key": os.getenv("VPN_API_KEY", "QBDMqDzCRh17NIGUsKDtWtoUmvwRVvSHHp4W8OCMcOM=")},
+            headers={"X-API-Key": os.getenv("VPN_API_KEY")},
             verify=False,
             timeout=10
         )
