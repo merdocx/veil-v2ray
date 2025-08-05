@@ -21,14 +21,14 @@
           "sessions": 1
         }
       },
-      "last_activity": "2025-08-05T16:38:42.397531",
+      "last_activity": "2025-08-05T17:23:49.941523",
       "is_active": false,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
         "connections": 0,
-        "timestamp": "2025-08-05T16:38:42.397522"
+        "timestamp": "2025-08-05T17:23:49.941514"
       }
     },
     "dc41f2d0-7741-43d2-b0c4-193cd8dd16ce": {
@@ -47,27 +47,27 @@
           "rx_bytes": 99,
           "tx_bytes": 99,
           "max_connections": 35,
-          "sessions": 8
+          "sessions": 19
         }
       },
-      "last_activity": "2025-08-05T16:38:42.398637",
+      "last_activity": "2025-08-05T17:23:49.943110",
       "is_active": true,
       "last_traffic": {
         "total_bytes": 198,
         "rx_bytes": 99,
         "tx_bytes": 99,
         "connections": 35,
-        "timestamp": "2025-08-05T16:38:42.398632"
+        "timestamp": "2025-08-05T17:23:49.943106"
       }
     }
   },
   "daily_stats": {
     "2025-08-05": {
-      "total_bytes": 14553564.781738281,
+      "total_bytes": 14555742.781738281,
       "total_connections": 43,
       "active_keys": 0,
-      "total_sessions": 9
+      "total_sessions": 20
     }
   },
-  "last_update": "2025-08-05T16:38:42.398643"
+  "last_update": "2025-08-05T17:23:49.943125"
 }
