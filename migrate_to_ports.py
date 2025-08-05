@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """
-Скрипт миграции существующих ключей на систему с индивидуальными портами
+Скрипт миграции существующих ключей на новую систему портов
 """
 
 import json
 import os
 import sys
-import time
 from datetime import datetime
+from typing import Dict, List, Optional
 
-# Добавляем текущую директорию в путь для импорта
+# Добавляем путь к модулям
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from port_manager import port_manager
-from xray_config_manager import xray_config_manager
-from port_traffic_monitor import port_traffic_monitor
+from port_manager import PortManager
+from xray_config_manager import XrayConfigManager
+# Удаляем импорт несуществующего модуля
+# from port_traffic_monitor import port_traffic_monitor
 
 def load_keys():
     """Загрузка ключей из файла"""
@@ -80,7 +81,7 @@ def migrate_keys_to_ports():
         
         try:
             # Назначаем порт для ключа
-            assigned_port = port_manager.assign_port(
+            assigned_port = PortManager.assign_port(
                 key["uuid"], 
                 key["id"], 
                 key["name"]
@@ -95,10 +96,10 @@ def migrate_keys_to_ports():
             key["port"] = assigned_port
             
             # Добавляем ключ в конфигурацию Xray
-            if not xray_config_manager.add_key_to_config(key["uuid"], key["name"]):
+            if not XrayConfigManager.add_key_to_config(key["uuid"], key["name"]):
                 print(f"❌ Не удалось добавить ключ {key['name']} в конфигурацию Xray")
                 # Откатываем назначение порта
-                port_manager.release_port(key["uuid"])
+                PortManager.release_port(key["uuid"])
                 failed_count += 1
                 continue
             
@@ -123,9 +124,9 @@ def migrate_keys_to_ports():
         # Показываем статус портов
         print()
         print("=== СТАТУС ПОРТОВ ===")
-        port_assignments = port_manager.get_all_assignments()
-        used_count = port_manager.get_used_ports_count()
-        available_count = port_manager.get_available_ports_count()
+        port_assignments = PortManager.get_all_assignments()
+        used_count = PortManager.get_used_ports_count()
+        available_count = PortManager.get_available_ports_count()
         
         print(f"🔌 Использовано портов: {used_count}")
         print(f"🔓 Свободных портов: {available_count}")
@@ -146,7 +147,7 @@ def validate_migration():
     print(f"📋 Загружено ключей: {len(keys)}")
     
     # Проверяем порты
-    port_assignments = port_manager.get_all_assignments()
+    port_assignments = PortManager.get_all_assignments()
     print(f"🔌 Назначено портов: {len(port_assignments['port_assignments'])}")
     
     # Проверяем соответствие
@@ -154,11 +155,11 @@ def validate_migration():
     print(f"🔗 Ключей с портами: {len(keys_with_ports)}")
     
     # Проверяем конфигурацию Xray
-    config_status = xray_config_manager.get_config_status()
+    config_status = XrayConfigManager.get_config_status()
     print(f"⚙️  Inbounds в конфигурации: {config_status.get('vless_inbounds', 0)}")
     
     # Валидация назначений портов
-    validation = port_manager.validate_port_assignments()
+    validation = PortManager.validate_port_assignments()
     if validation["valid"]:
         print("✅ Назначения портов корректны")
     else:
@@ -178,7 +179,7 @@ def main():
     keys = load_keys()
     print(f"   Ключей: {len(keys)}")
     
-    port_assignments = port_manager.get_all_assignments()
+    port_assignments = PortManager.get_all_assignments()
     print(f"   Назначено портов: {len(port_assignments['port_assignments'])}")
     
     if len(port_assignments["port_assignments"]) > 0:

@@ -1,0 +1,73 @@
+{
+  "log": {
+    "loglevel": "warning",
+    "access": "/root/vpn-server/logs/access.log",
+    "error": "/root/vpn-server/logs/error.log"
+  },
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "services": [
+      "StatsService"
+    ]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserUplink": true,
+        "statsUserDownlink": true
+      }
+    }
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 10085,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1",
+        "port": 10085
+      },
+      "tag": "api"
+    },
+    {
+      "listen": "0.0.0.0",
+      "port": 10001,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "0f8c9153-bb08-4e96-a673-c1b36a978d06",
+            "flow": "",
+            "email": "0f8c9153-bb08-4e96-a673-c1b36a978d06"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "eAFLQcV04bW9WZwdfYdbu-ss_Fl63cqGiHWEDA-JcUE",
+          "shortIds": [
+            "91cac0b4"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-0f8c9153-bb08-4e96-a673-c1b36a978d06"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    }
+  ]
+}

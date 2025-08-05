@@ -72,11 +72,24 @@ systemctl start xray vpn-api nginx
 
 ### API Endpoints
 
-- `POST /api/keys` - Создание ключа
-- `GET /api/keys` - Список ключей
-- `GET /api/keys/{id}` - Информация о ключе
-- `GET /api/keys/{id}/config` - Конфигурация клиента
-- `DELETE /api/keys/{id}` - Удаление ключа
+#### Управление ключами
+- `POST /api/keys` - создание ключа
+- `GET /api/keys` - список всех ключей  
+- `GET /api/keys/{key_id}` - получение ключа
+- `DELETE /api/keys/{key_id}` - удаление ключа
+- `GET /api/keys/{key_id}/config` - конфигурация ключа
+
+#### Мониторинг трафика
+- `GET /api/traffic/simple` - простой мониторинг всех ключей
+- `GET /api/keys/{key_id}/traffic/simple` - простой мониторинг ключа
+- `POST /api/keys/{key_id}/traffic/simple/reset` - сброс статистики ключа
+
+#### Системные эндпоинты
+- `GET /api/system/ports` - статус портов
+- `POST /api/system/ports/reset` - сброс портов
+- `GET /api/system/traffic/summary` - сводка трафика
+- `GET /api/system/xray/config-status` - статус конфигурации Xray
+- `POST /api/system/xray/sync-config` - синхронизация конфигурации
 
 ### Скрипт управления
 ```bash

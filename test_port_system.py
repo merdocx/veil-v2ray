@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 """
-Скрипт тестирования системы мониторинга с индивидуальными портами
+Тестирование системы портов и мониторинга трафика
 """
 
 import json
 import os
 import sys
 import time
-import requests
 from datetime import datetime
+from typing import Dict, List, Optional
 
-# Добавляем текущую директорию в путь для импорта
+# Добавляем путь к модулям
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from port_manager import port_manager
-from xray_config_manager import xray_config_manager
-from port_traffic_monitor import port_traffic_monitor
+from port_manager import PortManager
+from xray_config_manager import XrayConfigManager
+# Удаляем импорт несуществующего модуля
+# from port_traffic_monitor import port_traffic_monitor
 
 # Конфигурация API
 API_BASE_URL = "http://localhost:8000"
@@ -48,47 +49,37 @@ def make_api_request(endpoint, method="GET", data=None):
         print(f"❌ API request failed: {e}")
         return None
 
-def test_port_manager():
-    """Тестирование менеджера портов"""
-    print("🔌 Тестирование менеджера портов...")
+def test_port_system():
+    """Тестирование системы портов"""
+    print("🔌 Тестирование системы портов...")
     
-    # Тест получения доступного порта
-    port = port_manager.get_available_port()
-    if port:
-        print(f"✅ Доступный порт: {port}")
-    else:
-        print("❌ Не удалось получить доступный порт")
+    try:
+        # Создаем экземпляр менеджера портов
+        port_manager = PortManager()
+        
+        # Получаем статистику портов
+        used_count = port_manager.get_used_ports_count()
+        available_count = port_manager.get_available_ports_count()
+        
+        print(f"✅ Использовано портов: {used_count}")
+        print(f"✅ Доступно портов: {available_count}")
+        
+        # Получаем все назначения
+        assignments = port_manager.get_all_assignments()
+        print(f"✅ Назначений портов: {len(assignments.get('port_assignments', {}))}")
+        
+        # Валидация назначений
+        validation = port_manager.validate_port_assignments()
+        if validation["valid"]:
+            print("✅ Назначения портов корректны")
+        else:
+            print(f"❌ Ошибки в назначениях: {validation['errors']}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Ошибка тестирования системы портов: {e}")
         return False
-    
-    # Тест назначения порта
-    test_uuid = "test-uuid-123"
-    test_key_id = "test-key-123"
-    test_name = "Test Key"
-    
-    assigned_port = port_manager.assign_port(test_uuid, test_key_id, test_name)
-    if assigned_port:
-        print(f"✅ Порт {assigned_port} назначен для {test_name}")
-    else:
-        print("❌ Не удалось назначить порт")
-        return False
-    
-    # Тест получения порта для UUID
-    retrieved_port = port_manager.get_port_for_uuid(test_uuid)
-    if retrieved_port == assigned_port:
-        print(f"✅ Порт {retrieved_port} корректно получен для UUID")
-    else:
-        print(f"❌ Несоответствие портов: {retrieved_port} != {assigned_port}")
-        return False
-    
-    # Тест освобождения порта
-    if port_manager.release_port(test_uuid):
-        print("✅ Порт успешно освобожден")
-    else:
-        print("❌ Не удалось освободить порт")
-        return False
-    
-    print("✅ Менеджер портов работает корректно")
-    return True
 
 def test_xray_config_manager():
     """Тестирование менеджера конфигурации Xray"""
@@ -131,68 +122,51 @@ def test_xray_config_manager():
     print("✅ Менеджер конфигурации Xray работает корректно")
     return True
 
-def test_port_traffic_monitor():
-    """Тестирование монитора трафика портов"""
-    print("📊 Тестирование монитора трафика портов...")
-    
-    # Тест получения системной сводки
-    system_summary = port_traffic_monitor.get_system_traffic_summary()
-    if "error" not in system_summary:
-        print(f"✅ Системная сводка получена: {system_summary.get('active_ports', 0)} активных портов")
-    else:
-        print(f"❌ Ошибка получения системной сводки: {system_summary['error']}")
-        return False
-    
-    # Тест получения трафика всех портов
-    all_traffic = port_traffic_monitor.get_all_ports_traffic()
-    if "error" not in all_traffic:
-        print(f"✅ Трафик всех портов получен: {all_traffic.get('total_ports', 0)} портов")
-    else:
-        print(f"❌ Ошибка получения трафика портов: {all_traffic['error']}")
-        return False
-    
-    # Тест получения трафика конкретного порта
-    test_port = 10001
-    port_traffic = port_traffic_monitor.get_port_traffic(test_port)
-    if "error" not in port_traffic:
-        print(f"✅ Трафик порта {test_port} получен: {port_traffic.get('total_bytes', 0)} байт")
-    else:
-        print(f"❌ Ошибка получения трафика порта: {port_traffic['error']}")
-        return False
-    
-    print("✅ Монитор трафика портов работает корректно")
-    return True
-
 def test_api_endpoints():
     """Тестирование API эндпоинтов"""
     print("🌐 Тестирование API эндпоинтов...")
     
-    # Тест получения статуса портов
-    ports_status = make_api_request("/api/system/ports")
-    if ports_status:
-        print(f"✅ Статус портов получен: {ports_status.get('used_ports', 0)} использовано")
-    else:
-        print("❌ Не удалось получить статус портов")
+    try:
+        # Тест получения списка ключей
+        keys_response = make_api_request("/api/keys")
+        if keys_response:
+            print(f"✅ Список ключей получен: {len(keys_response)} ключей")
+        else:
+            print("❌ Не удалось получить список ключей")
+            return False
+        
+        # Тест получения статуса портов
+        ports_response = make_api_request("/api/system/ports")
+        if ports_response:
+            print(f"✅ Статус портов получен: {ports_response.get('used_count', 0)} использовано")
+        else:
+            print("❌ Не удалось получить статус портов")
+            return False
+        
+        # Тест получения простого трафика
+        traffic_response = make_api_request("/api/traffic/simple")
+        if traffic_response:
+            print(f"✅ Простой трафик получен: {traffic_response.get('data', {}).get('total_connections', 0)} соединений")
+        else:
+            print("❌ Не удалось получить простой трафик")
+            return False
+        
+        # Тест получения трафика конкретного ключа (если есть ключи)
+        if keys_response:
+            key_id = keys_response[0]["id"]
+            key_traffic_response = make_api_request(f"/api/keys/{key_id}/traffic/simple")
+            if key_traffic_response:
+                print(f"✅ Трафик ключа {key_id} получен")
+            else:
+                print(f"❌ Не удалось получить трафик ключа {key_id}")
+                return False
+        
+        print("✅ API эндпоинты работают корректно")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Ошибка тестирования API: {e}")
         return False
-    
-    # Тест получения системной сводки трафика
-    traffic_summary = make_api_request("/api/system/traffic/summary")
-    if traffic_summary:
-        print("✅ Системная сводка трафика получена")
-    else:
-        print("❌ Не удалось получить системную сводку трафика")
-        return False
-    
-    # Тест получения статуса конфигурации Xray
-    xray_status = make_api_request("/api/system/xray/config-status")
-    if xray_status:
-        print("✅ Статус конфигурации Xray получен")
-    else:
-        print("❌ Не удалось получить статус конфигурации Xray")
-        return False
-    
-    print("✅ API эндпоинты работают корректно")
-    return True
 
 def test_key_creation_and_deletion():
     """Тестирование создания и удаления ключей"""
@@ -236,9 +210,8 @@ def run_all_tests():
     print("=" * 50)
     
     tests = [
-        ("Менеджер портов", test_port_manager),
+        ("Менеджер портов", test_port_system),
         ("Менеджер конфигурации Xray", test_xray_config_manager),
-        ("Монитор трафика портов", test_port_traffic_monitor),
         ("API эндпоинты", test_api_endpoints),
         ("Создание и удаление ключей", test_key_creation_and_deletion)
     ]

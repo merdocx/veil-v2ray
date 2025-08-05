@@ -26,6 +26,7 @@ load_env_file()
 from port_manager import port_manager, assign_port_for_key, release_port_for_key, get_port_for_key, get_all_port_assignments, reset_all_ports
 from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync
 from simple_traffic_monitor import get_simple_uuid_traffic, get_simple_all_ports_traffic, reset_simple_uuid_traffic
+from traffic_history_manager import traffic_history
 
 app = FastAPI(title="VPN Key Management API", version="1.0.0")
 
@@ -248,6 +249,38 @@ async def create_key(request: CreateKeyRequest, api_key: str = Depends(verify_ap
             remove_key_from_xray_config(key_uuid)
             raise HTTPException(status_code=500, detail="Failed to restart Xray service")
         
+        # Инициализируем историю трафика для нового ключа
+        try:
+            traffic_history.update_key_traffic(
+                key_uuid, 
+                request.name, 
+                assigned_port, 
+                {"total_bytes": 0, "rx_bytes": 0, "tx_bytes": 0, "connections": 0}
+            )
+        except Exception as e:
+            print(f"Warning: Failed to initialize traffic history for key {key_uuid}: {e}")
+        
+        # Инициализируем историю трафика для нового ключа
+        try:
+            traffic_history.update_key_traffic(
+                key_uuid, 
+                request.name, 
+                assigned_port, 
+                {"total_bytes": 0, "rx_bytes": 0, "tx_bytes": 0, "connections": 0}
+            )
+        except Exception as e:
+            print(f"Warning: Failed to initialize traffic history for key {key_uuid}: {e}")
+        # Инициализируем историю трафика для нового ключа
+        try:
+            traffic_history.update_key_traffic(
+                key_uuid, 
+                request.name, 
+                assigned_port, 
+                {"total_bytes": 0, "rx_bytes": 0, "tx_bytes": 0, "connections": 0}
+            )
+        except Exception as e:
+            print(f"Warning: Failed to initialize traffic history for key {key_uuid}: {e}")
+        
         return VPNKey(**new_key)
         
     except HTTPException:
@@ -370,28 +403,28 @@ async def get_key_config(key_id: str, api_key: str = Depends(verify_api_key)):
 
 @app.get("/api/traffic/status")
 async def get_traffic_status(api_key: str = Depends(verify_api_key)):
-    """Получить статус системы мониторинга трафика"""
+    """Получить статус трафика всех ключей"""
     try:
         keys = load_keys()
-        active_keys = [k for k in keys if k["is_active"]]
+        active_keys = [key for key in keys if key.get("is_active", True)]
         
         result = {
             "total_keys": len(keys),
             "active_keys": len(active_keys),
-            "precise_monitor_available": True,
+            "simple_monitor_available": True,
             "traffic_stats": []
         }
         
         for key in active_keys:
-            # Точный расчет через новую систему
-            exact = get_key_traffic_bytes(key["uuid"])
+            # Используем простой мониторинг
+            simple_traffic = get_simple_uuid_traffic(key["uuid"])
             
             key_status = {
                 "key_id": key["id"],
                 "key_name": key["name"],
                 "uuid": key["uuid"],
-                "exact_traffic": exact,
-                "has_traffic_data": exact is not None and "error" not in exact
+                "simple_traffic": simple_traffic,
+                "has_traffic_data": simple_traffic is not None and "error" not in simple_traffic
             }
             
             result["traffic_stats"].append(key_status)
@@ -641,6 +674,133 @@ async def reset_key_simple_traffic(key_id: str, api_key: str = Depends(verify_ap
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Reset error: {str(e)}")
+
+# ===== ЭНДПОИНТЫ ИСТОРИЧЕСКИХ ДАННЫХ О ТРАФИКЕ =====
+
+@app.get("/api/traffic/history")
+async def get_traffic_history(api_key: str = Depends(verify_api_key)):
+    """Получить общий объем трафика для всех ключей с момента создания"""
+    try:
+        # Обновляем историю на основе текущих данных
+        current_traffic = get_simple_all_ports_traffic()
+        keys = load_keys()
+        
+        for key in keys:
+            if key.get("is_active", True):
+                port = key.get("port")
+                if port and str(port) in current_traffic["ports"]:
+                    port_traffic = current_traffic["ports"][str(port)]
+                    traffic_history.update_key_traffic(
+                        key["uuid"], 
+                        key["name"], 
+                        port, 
+                        port_traffic
+                    )
+        
+        # Получаем общую историю
+        result = traffic_history.get_all_keys_total_traffic()
+        
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get traffic history: {str(e)}")
+
+@app.get("/api/keys/{key_id}/traffic/history")
+async def get_key_traffic_history(key_id: str, api_key: str = Depends(verify_api_key)):
+    """Получить общий объем трафика для конкретного ключа с момента создания"""
+    try:
+        # Находим ключ по key_id
+        keys = load_keys()
+        key = next((k for k in keys if k["id"] == key_id), None)
+        
+        if not key:
+            raise HTTPException(status_code=404, detail="Key not found")
+        
+        # Обновляем историю на основе текущих данных
+        current_traffic = get_simple_uuid_traffic(key["uuid"])
+        if current_traffic and "error" not in current_traffic:
+            traffic_history.update_key_traffic(
+                key["uuid"], 
+                key["name"], 
+                key.get("port", 0), 
+                current_traffic
+            )
+        
+        # Получаем историю ключа
+        result = traffic_history.get_key_total_traffic(key["uuid"])
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Traffic history not found for this key")
+        
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get key traffic history: {str(e)}")
+
+@app.get("/api/traffic/daily/{date}")
+async def get_daily_traffic_stats(date: str, api_key: str = Depends(verify_api_key)):
+    """Получить ежедневную статистику трафика"""
+    try:
+        result = traffic_history.get_daily_stats(date)
+        
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get daily traffic stats: {str(e)}")
+
+@app.post("/api/keys/{key_id}/traffic/history/reset")
+async def reset_key_traffic_history(key_id: str, api_key: str = Depends(verify_api_key)):
+    """Сбросить историю трафика для конкретного ключа"""
+    try:
+        # Находим ключ по key_id
+        keys = load_keys()
+        key = next((k for k in keys if k["id"] == key_id), None)
+        
+        if not key:
+            raise HTTPException(status_code=404, detail="Key not found")
+        
+        # Сбрасываем историю
+        success = traffic_history.reset_key_traffic(key["uuid"])
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Traffic history not found for this key")
+        
+        return {
+            "status": "success",
+            "message": "Traffic history reset successfully",
+            "key_id": key_id,
+            "timestamp": datetime.now().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset traffic history: {str(e)}")
+
+@app.post("/api/traffic/history/cleanup")
+async def cleanup_traffic_history(days_to_keep: int = 30, api_key: str = Depends(verify_api_key)):
+    """Очистить старые данные истории трафика"""
+    try:
+        traffic_history.cleanup_old_data(days_to_keep)
+        
+        return {
+            "status": "success",
+            "message": f"Cleaned up traffic history older than {days_to_keep} days",
+            "days_kept": days_to_keep,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to cleanup traffic history: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

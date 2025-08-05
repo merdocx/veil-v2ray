@@ -91,30 +91,40 @@ def demo_port_management():
 
 def demo_traffic_monitoring():
     """Демонстрация мониторинга трафика"""
-    print_subsection("МОНИТОРИНГ ТРАФИКА")
+    print("\n📊 Демонстрация мониторинга трафика...")
     
-    # Получаем точную статистику трафика
-    traffic_data = make_api_request("/api/traffic/ports/exact")
-    if traffic_data:
-        ports_traffic = traffic_data['ports_traffic']
-        system_summary = traffic_data['system_summary']
-        
-        print(f"📊 Всего портов: {ports_traffic['total_ports']}")
-        print(f"🔗 Всего соединений: {ports_traffic['total_connections']}")
-        print(f"📈 Общий трафик: {ports_traffic['total_traffic_formatted']}")
-        print(f"🌐 Системный трафик: {system_summary['total_system_traffic_formatted']}")
-        
-        if ports_traffic['ports_traffic']:
-            print("\n📋 Трафик по портам:")
-            for uuid, port_data in ports_traffic['ports_traffic'].items():
-                traffic = port_data['traffic']
-                print(f"   Порт {port_data['port']} ({port_data['key_name']}):")
-                print(f"     🔗 Соединения: {traffic['connections']}")
-                print(f"     📊 Трафик: {traffic['total_formatted']}")
-                print(f"     ⬇️  RX: {traffic['rx_formatted']}")
-                print(f"     ⬆️  TX: {traffic['tx_formatted']}")
-    else:
+    # Получаем простой трафик
+    traffic_data = make_api_request("/api/traffic/simple")
+    if not traffic_data:
         print("❌ Не удалось получить данные трафика")
+        return
+    
+    print("✅ Данные трафика получены:")
+    
+    # Показываем общую статистику
+    if 'data' in traffic_data and 'ports' in traffic_data['data']:
+        ports_traffic = traffic_data['data']['ports']
+        
+        print(f"📊 Всего портов: {len(ports_traffic)}")
+        print(f"🔗 Всего соединений: {traffic_data['data'].get('total_connections', 0)}")
+        print(f"📈 Общий трафик: {traffic_data['data'].get('total_bytes', 0)} байт")
+        
+        # Показываем детали по каждому порту
+        if ports_traffic:
+            print("\n📋 Детали по портам:")
+            for port, port_data in ports_traffic.items():
+                traffic = port_data
+                print(f"   Порт {port}:")
+                print(f"     🔗 Соединений: {traffic.get('connections', 0)}")
+                print(f"     📊 Трафик: {traffic.get('total_formatted', '0 B')}")
+                print(f"     📥 Входящий: {traffic.get('rx_formatted', '0 B')}")
+                print(f"     📤 Исходящий: {traffic.get('tx_formatted', '0 B')}")
+                print(f"     ⚡ Скорость: {traffic.get('traffic_rate', 0):.2f} байт/сек")
+                if 'uuid' in traffic:
+                    print(f"     🆔 UUID: {traffic['uuid']}")
+                print()
+    else:
+        print("❌ Неверный формат данных трафика")
 
 def demo_xray_configuration():
     """Демонстрация конфигурации Xray"""
