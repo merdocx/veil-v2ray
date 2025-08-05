@@ -84,6 +84,15 @@ systemctl start xray vpn-api nginx
 - `GET /api/keys/{key_id}/traffic/simple` - простой мониторинг ключа
 - `POST /api/keys/{key_id}/traffic/simple/reset` - сброс статистики ключа
 
+#### Исторические данные
+- `GET /api/traffic/history` - общая история трафика
+- `GET /api/keys/{key_id}/traffic/history` - история трафика ключа
+- `GET /api/traffic/daily/{date}` - ежедневная статистика
+
+#### Месячная статистика
+- `GET /api/traffic/monthly` - месячная статистика всех ключей
+- `GET /api/keys/{key_id}/traffic/monthly` - месячная статистика ключа
+
 #### Системные эндпоинты
 - `GET /api/system/ports` - статус портов
 - `POST /api/system/ports/reset` - сброс портов

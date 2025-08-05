@@ -1,6 +1,6 @@
 # VPN Key Management API - Документация
 
-## Версия API: 2.1.0
+## Версия API: 2.1.3
 
 ### Обзор
 API для управления VPN ключами с поддержкой VLESS+Reality протокола, индивидуальных портов и мониторинга трафика.
@@ -286,6 +286,139 @@ curl -X POST "https://localhost:8000/api/keys" \
     "days_kept": 30,
     "timestamp": "2025-08-05T16:06:51.354243"
 }
+```
+
+---
+
+## 📅 Месячная статистика трафика
+
+### Общая месячная статистика
+**GET** `/api/traffic/monthly?year_month=2025-08`
+
+Возвращает месячную статистику трафика для всех ключей. Параметр `year_month` необязателен (по умолчанию текущий месяц).
+
+**Параметры:**
+- `year_month` (опционально) - месяц в формате YYYY-MM (например, "2025-08")
+
+**Ответ:**
+```json
+{
+    "status": "success",
+    "data": {
+        "year_month": "2025-08",
+        "total_keys": 2,
+        "active_keys": 2,
+        "total_traffic_bytes": 38468204.02026367,
+        "total_rx_bytes": 19234101.0,
+        "total_tx_bytes": 19234101.0,
+        "total_connections": 271,
+        "total_sessions": 28,
+        "keys": [
+            {
+                "key_uuid": "0e5ff24b-c47b-4193-ae76-3ba8233a1930",
+                "key_name": "nvipetrenko@gmail.com",
+                "port": 10001,
+                "created_at": "2025-08-05T16:06:36.864003",
+                "last_activity": "2025-08-05T17:49:51.981637",
+                "is_active": true,
+                "monthly_traffic": {
+                    "total_bytes": 38467682.02026367,
+                    "rx_bytes": 19233840.0,
+                    "tx_bytes": 19233840.0,
+                    "max_connections": 271,
+                    "sessions": 5,
+                    "total_formatted": "36.69 MB",
+                    "rx_formatted": "18.34 MB",
+                    "tx_formatted": "18.34 MB"
+                }
+            },
+            {
+                "key_uuid": "dc41f2d0-7741-43d2-b0c4-193cd8dd16ce",
+                "key_name": "zhdanov@gmail.com",
+                "port": 10002,
+                "created_at": "2025-08-05T16:06:36.865147",
+                "last_activity": "2025-08-05T17:49:51.983284",
+                "is_active": true,
+                "monthly_traffic": {
+                    "total_bytes": 522,
+                    "rx_bytes": 261,
+                    "tx_bytes": 261,
+                    "max_connections": 252,
+                    "sessions": 23,
+                    "total_formatted": "522 B",
+                    "rx_formatted": "261 B",
+                    "tx_formatted": "261 B"
+                }
+            }
+        ],
+        "total_traffic_formatted": "36.69 MB",
+        "total_rx_formatted": "18.34 MB",
+        "total_tx_formatted": "18.34 MB"
+    },
+    "timestamp": "2025-08-05T17:49:51.983284"
+}
+```
+
+**Примеры использования:**
+```bash
+# Текущий месяц
+curl -H "X-API-Key: your-api-key" https://localhost:8000/api/traffic/monthly
+
+# Указанный месяц
+curl -H "X-API-Key: your-api-key" https://localhost:8000/api/traffic/monthly?year_month=2025-08
+```
+
+### Месячная статистика ключа
+**GET** `/api/keys/{key_id}/traffic/monthly?year_month=2025-08`
+
+Возвращает месячную статистику трафика для конкретного ключа. Параметр `year_month` необязателен (по умолчанию текущий месяц).
+
+**Параметры:**
+- `year_month` (опционально) - месяц в формате YYYY-MM (например, "2025-08")
+
+**Ответ:**
+```json
+{
+    "status": "success",
+    "data": {
+        "key_uuid": "0e5ff24b-c47b-4193-ae76-3ba8233a1930",
+        "key_name": "nvipetrenko@gmail.com",
+        "port": 10001,
+        "created_at": "2025-08-05T16:06:36.864003",
+        "last_activity": "2025-08-05T17:49:46.365707",
+        "is_active": true,
+        "year_month": "2025-08",
+        "monthly_traffic": {
+            "total_bytes": 38467682.02026367,
+            "rx_bytes": 19233840.0,
+            "tx_bytes": 19233840.0,
+            "max_connections": 271,
+            "sessions": 4,
+            "total_formatted": "36.69 MB",
+            "rx_formatted": "18.34 MB",
+            "tx_formatted": "18.34 MB"
+        },
+        "daily_breakdown": {
+            "2025-08-05": {
+                "total_bytes": 38467682.02026367,
+                "rx_bytes": 19233840.0,
+                "tx_bytes": 19233840.0,
+                "max_connections": 271,
+                "sessions": 4
+            }
+        }
+    },
+    "timestamp": "2025-08-05T17:49:46.365707"
+}
+```
+
+**Примеры использования:**
+```bash
+# Текущий месяц для ключа
+curl -H "X-API-Key: your-api-key" https://localhost:8000/api/keys/key-id/traffic/monthly
+
+# Указанный месяц для ключа
+curl -H "X-API-Key: your-api-key" https://localhost:8000/api/keys/key-id/traffic/monthly?year_month=2025-08
 ```
 
 ---

@@ -76,6 +76,10 @@ VPN_SSL_KEY_PATH=/etc/ssl/private/vpn-api.key
 - `POST /api/keys/{id}/traffic/history/reset` - Сброс истории
 - `POST /api/traffic/history/cleanup` - Очистка старых данных
 
+### Месячная статистика
+- `GET /api/traffic/monthly` - Месячная статистика всех ключей
+- `GET /api/keys/{id}/traffic/monthly` - Месячная статистика ключа
+
 ### Системные
 - `GET /api/system/ports` - Статус портов
 - `POST /api/system/sync-config` - Синхронизация конфигурации
@@ -212,6 +216,6 @@ sudo journalctl -f
 
 ---
 
-**Версия:** 2.1.0  
+**Версия:** 2.1.3  
 **Дата обновления:** 5 августа 2025  
-**Статус:** ✅ Актуально (добавлена система исторических данных) 
+**Статус:** ✅ Актуально (добавлена система исторических данных и месячной статистики) 

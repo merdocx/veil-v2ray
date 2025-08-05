@@ -14,6 +14,15 @@
 - `GET /api/keys/{key_id}/traffic/simple` - простой мониторинг ключа
 - `POST /api/keys/{key_id}/traffic/simple/reset` - сброс статистики ключа
 
+### Исторические данные
+- `GET /api/traffic/history` - общая история трафика
+- `GET /api/keys/{key_id}/traffic/history` - история трафика ключа
+- `GET /api/traffic/daily/{date}` - ежедневная статистика
+
+### Месячная статистика
+- `GET /api/traffic/monthly` - месячная статистика всех ключей
+- `GET /api/keys/{key_id}/traffic/monthly` - месячная статистика ключа
+
 ### Системные эндпоинты
 - `GET /api/system/ports` - статус портов
 - `POST /api/system/ports/reset` - сброс портов
@@ -98,6 +107,54 @@ curl -X GET "https://veil-bird.ru/api/system/xray/config-status" \
 #### Синхронизация конфигурации
 ```bash
 curl -X POST "https://veil-bird.ru/api/system/xray/sync-config" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### Исторические данные
+
+#### Общая история трафика
+```bash
+curl -X GET "https://veil-bird.ru/api/traffic/history" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### История трафика ключа
+```bash
+curl -X GET "https://veil-bird.ru/api/keys/{key_id}/traffic/history" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### Ежедневная статистика
+```bash
+curl -X GET "https://veil-bird.ru/api/traffic/daily/2025-08-05" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### Месячная статистика
+
+#### Месячная статистика всех ключей
+```bash
+curl -X GET "https://veil-bird.ru/api/traffic/monthly" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### Месячная статистика с указанием месяца
+```bash
+curl -X GET "https://veil-bird.ru/api/traffic/monthly?year_month=2025-08" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### Месячная статистика ключа
+```bash
+curl -X GET "https://veil-bird.ru/api/keys/{key_id}/traffic/monthly" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### Месячная статистика ключа с указанием месяца
+```bash
+curl -X GET "https://veil-bird.ru/api/keys/{key_id}/traffic/monthly?year_month=2025-08" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
