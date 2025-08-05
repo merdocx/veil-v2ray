@@ -7,28 +7,28 @@
       "port": 10001,
       "created_at": "2025-08-05T16:06:36.864003",
       "total_traffic": {
-        "total_bytes": 14551980.781738281,
-        "rx_bytes": 7275990.0,
-        "tx_bytes": 7275990.0,
-        "total_connections": 43
+        "total_bytes": 38467682.02026367,
+        "rx_bytes": 19233840.0,
+        "tx_bytes": 19233840.0,
+        "total_connections": 271
       },
       "daily_traffic": {
         "2025-08-05": {
-          "total_bytes": 14551980.781738281,
-          "rx_bytes": 7275990.0,
-          "tx_bytes": 7275990.0,
-          "max_connections": 43,
-          "sessions": 1
+          "total_bytes": 38467682.02026367,
+          "rx_bytes": 19233840.0,
+          "tx_bytes": 19233840.0,
+          "max_connections": 271,
+          "sessions": 5
         }
       },
-      "last_activity": "2025-08-05T17:23:49.941523",
-      "is_active": false,
+      "last_activity": "2025-08-05T17:49:51.981637",
+      "is_active": true,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
-        "connections": 0,
-        "timestamp": "2025-08-05T17:23:49.941514"
+        "connections": 243,
+        "timestamp": "2025-08-05T17:49:51.981631"
       }
     },
     "dc41f2d0-7741-43d2-b0c4-193cd8dd16ce": {
@@ -36,38 +36,38 @@
       "port": 10002,
       "created_at": "2025-08-05T16:06:36.865147",
       "total_traffic": {
-        "total_bytes": 198,
-        "rx_bytes": 99,
-        "tx_bytes": 99,
-        "total_connections": 35
+        "total_bytes": 522,
+        "rx_bytes": 261,
+        "tx_bytes": 261,
+        "total_connections": 252
       },
       "daily_traffic": {
         "2025-08-05": {
-          "total_bytes": 198,
-          "rx_bytes": 99,
-          "tx_bytes": 99,
-          "max_connections": 35,
-          "sessions": 19
+          "total_bytes": 522,
+          "rx_bytes": 261,
+          "tx_bytes": 261,
+          "max_connections": 252,
+          "sessions": 23
         }
       },
-      "last_activity": "2025-08-05T17:23:49.943110",
+      "last_activity": "2025-08-05T17:49:51.983284",
       "is_active": true,
       "last_traffic": {
-        "total_bytes": 198,
-        "rx_bytes": 99,
-        "tx_bytes": 99,
-        "connections": 35,
-        "timestamp": "2025-08-05T17:23:49.943106"
+        "total_bytes": 324,
+        "rx_bytes": 162,
+        "tx_bytes": 162,
+        "connections": 252,
+        "timestamp": "2025-08-05T17:49:51.983276"
       }
     }
   },
   "daily_stats": {
     "2025-08-05": {
-      "total_bytes": 14555742.781738281,
-      "total_connections": 43,
+      "total_bytes": 38472092.02026367,
+      "total_connections": 271,
       "active_keys": 0,
-      "total_sessions": 20
+      "total_sessions": 28
     }
   },
-  "last_update": "2025-08-05T17:23:49.943125"
+  "last_update": "2025-08-05T17:49:51.983290"
 }

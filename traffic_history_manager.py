@@ -282,6 +282,136 @@ class TrafficHistoryManager:
             "total_sessions": daily_stats["total_sessions"],
             "total_formatted": self._format_bytes(daily_stats["total_bytes"])
         }
+
+    def get_monthly_stats(self, year_month: Optional[str] = None) -> Dict[str, Any]:
+        """Получает месячную статистику трафика для всех ключей"""
+        history = self._load_history()
+        
+        if year_month is None:
+            year_month = datetime.now().strftime("%Y-%m")
+        
+        result = {
+            "year_month": year_month,
+            "total_keys": len(history["keys_history"]),
+            "active_keys": 0,
+            "total_traffic_bytes": 0,
+            "total_rx_bytes": 0,
+            "total_tx_bytes": 0,
+            "total_connections": 0,
+            "total_sessions": 0,
+            "keys": []
+        }
+        
+        for key_uuid, key_history in history["keys_history"].items():
+            monthly_traffic = {
+                "total_bytes": 0,
+                "rx_bytes": 0,
+                "tx_bytes": 0,
+                "max_connections": 0,
+                "sessions": 0
+            }
+            
+            # Суммируем данные за месяц
+            for date, daily_data in key_history["daily_traffic"].items():
+                if date.startswith(year_month):
+                    monthly_traffic["total_bytes"] += daily_data["total_bytes"]
+                    monthly_traffic["rx_bytes"] += daily_data["rx_bytes"]
+                    monthly_traffic["tx_bytes"] += daily_data["tx_bytes"]
+                    monthly_traffic["max_connections"] = max(
+                        monthly_traffic["max_connections"],
+                        daily_data["max_connections"]
+                    )
+                    monthly_traffic["sessions"] += daily_data["sessions"]
+            
+            if key_history["is_active"]:
+                result["active_keys"] += 1
+            
+            result["total_traffic_bytes"] += monthly_traffic["total_bytes"]
+            result["total_rx_bytes"] += monthly_traffic["rx_bytes"]
+            result["total_tx_bytes"] += monthly_traffic["tx_bytes"]
+            result["total_connections"] = max(result["total_connections"], monthly_traffic["max_connections"])
+            result["total_sessions"] += monthly_traffic["sessions"]
+            
+            key_data = {
+                "key_uuid": key_uuid,
+                "key_name": key_history["key_name"],
+                "port": key_history["port"],
+                "created_at": key_history["created_at"],
+                "last_activity": key_history["last_activity"],
+                "is_active": key_history["is_active"],
+                "monthly_traffic": {
+                    "total_bytes": monthly_traffic["total_bytes"],
+                    "rx_bytes": monthly_traffic["rx_bytes"],
+                    "tx_bytes": monthly_traffic["tx_bytes"],
+                    "max_connections": monthly_traffic["max_connections"],
+                    "sessions": monthly_traffic["sessions"],
+                    "total_formatted": self._format_bytes(monthly_traffic["total_bytes"]),
+                    "rx_formatted": self._format_bytes(monthly_traffic["rx_bytes"]),
+                    "tx_formatted": self._format_bytes(monthly_traffic["tx_bytes"])
+                }
+            }
+            
+            result["keys"].append(key_data)
+        
+        result["total_traffic_formatted"] = self._format_bytes(result["total_traffic_bytes"])
+        result["total_rx_formatted"] = self._format_bytes(result["total_rx_bytes"])
+        result["total_tx_formatted"] = self._format_bytes(result["total_tx_bytes"])
+        
+        return result
+
+    def get_key_monthly_traffic(self, key_uuid: str, year_month: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Получает месячную статистику трафика для конкретного ключа"""
+        history = self._load_history()
+        
+        if key_uuid not in history["keys_history"]:
+            return None
+        
+        if year_month is None:
+            year_month = datetime.now().strftime("%Y-%m")
+        
+        key_history = history["keys_history"][key_uuid]
+        monthly_traffic = {
+            "total_bytes": 0,
+            "rx_bytes": 0,
+            "tx_bytes": 0,
+            "max_connections": 0,
+            "sessions": 0,
+            "daily_breakdown": {}
+        }
+        
+        # Суммируем данные за месяц
+        for date, daily_data in key_history["daily_traffic"].items():
+            if date.startswith(year_month):
+                monthly_traffic["total_bytes"] += daily_data["total_bytes"]
+                monthly_traffic["rx_bytes"] += daily_data["rx_bytes"]
+                monthly_traffic["tx_bytes"] += daily_data["tx_bytes"]
+                monthly_traffic["max_connections"] = max(
+                    monthly_traffic["max_connections"],
+                    daily_data["max_connections"]
+                )
+                monthly_traffic["sessions"] += daily_data["sessions"]
+                monthly_traffic["daily_breakdown"][date] = daily_data
+        
+        return {
+            "key_uuid": key_uuid,
+            "key_name": key_history["key_name"],
+            "port": key_history["port"],
+            "created_at": key_history["created_at"],
+            "last_activity": key_history["last_activity"],
+            "is_active": key_history["is_active"],
+            "year_month": year_month,
+            "monthly_traffic": {
+                "total_bytes": monthly_traffic["total_bytes"],
+                "rx_bytes": monthly_traffic["rx_bytes"],
+                "tx_bytes": monthly_traffic["tx_bytes"],
+                "max_connections": monthly_traffic["max_connections"],
+                "sessions": monthly_traffic["sessions"],
+                "total_formatted": self._format_bytes(monthly_traffic["total_bytes"]),
+                "rx_formatted": self._format_bytes(monthly_traffic["rx_bytes"]),
+                "tx_formatted": self._format_bytes(monthly_traffic["tx_bytes"])
+            },
+            "daily_breakdown": monthly_traffic["daily_breakdown"]
+        }
     
     def reset_key_traffic(self, key_uuid: str) -> bool:
         """Сбрасывает статистику трафика для ключа"""

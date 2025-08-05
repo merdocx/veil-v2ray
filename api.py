@@ -802,6 +802,76 @@ async def cleanup_traffic_history(days_to_keep: int = 30, api_key: str = Depends
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to cleanup traffic history: {str(e)}")
 
+# ===== ЭНДПОИНТЫ МЕСЯЧНОЙ СТАТИСТИКИ ТРАФИКА =====
+
+@app.get("/api/traffic/monthly")
+async def get_monthly_traffic_stats(year_month: Optional[str] = None, api_key: str = Depends(verify_api_key)):
+    """Получить месячную статистику трафика для всех ключей"""
+    try:
+        # Обновляем историю на основе текущих данных
+        current_traffic = get_simple_all_ports_traffic()
+        keys = load_keys()
+
+        for key in keys:
+            if key.get("is_active", True):
+                port = key.get("port")
+                if port and str(port) in current_traffic["ports"]:
+                    port_traffic = current_traffic["ports"][str(port)]
+                    traffic_history.update_key_traffic(
+                        key["uuid"],
+                        key["name"],
+                        port,
+                        port_traffic
+                    )
+
+        # Получаем месячную статистику
+        result = traffic_history.get_monthly_stats(year_month)
+
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get monthly traffic stats: {str(e)}")
+
+@app.get("/api/keys/{key_id}/traffic/monthly")
+async def get_key_monthly_traffic(key_id: str, year_month: Optional[str] = None, api_key: str = Depends(verify_api_key)):
+    """Получить месячную статистику трафика для конкретного ключа"""
+    try:
+        # Находим ключ по key_id
+        keys = load_keys()
+        key = next((k for k in keys if k["id"] == key_id), None)
+
+        if not key:
+            raise HTTPException(status_code=404, detail="Key not found")
+
+        # Обновляем историю на основе текущих данных
+        current_traffic = get_simple_uuid_traffic(key["uuid"])
+        if current_traffic and "error" not in current_traffic:
+            traffic_history.update_key_traffic(
+                key["uuid"],
+                key["name"],
+                key.get("port", 0),
+                current_traffic
+            )
+
+        # Получаем месячную статистику ключа
+        result = traffic_history.get_key_monthly_traffic(key["uuid"], year_month)
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Monthly traffic data not found for this key")
+
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get key monthly traffic: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     
