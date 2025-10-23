@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import List, Optional, Dict
 from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
+import psutil
 
 # Загрузка переменных окружения из .env файла
 def load_env_file():
@@ -200,6 +201,47 @@ async def root():
 @app.get("/api/")
 async def api_root():
     return {"message": "VPN Key Management API", "version": "1.0.0", "status": "running"}
+
+@app.get("/health")
+async def health_check():
+    """Health check эндпоинт для мониторинга состояния системы"""
+    try:
+        # Проверка статуса сервисов
+        xray_status = "running" if subprocess.run(['/usr/bin/systemctl', 'is-active', 'xray'], 
+                                                capture_output=True, text=True).returncode == 0 else "stopped"
+        api_status = "running" if subprocess.run(['/usr/bin/systemctl', 'is-active', 'vpn-api'], 
+                                               capture_output=True, text=True).returncode == 0 else "stopped"
+        nginx_status = "running" if subprocess.run(['/usr/bin/systemctl', 'is-active', 'nginx'], 
+                                                 capture_output=True, text=True).returncode == 0 else "stopped"
+        
+        # Получение системных ресурсов
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "version": "2.1.4",
+            "services": {
+                "xray": xray_status,
+                "api": api_status,
+                "nginx": nginx_status
+            },
+            "resources": {
+                "memory_usage_percent": memory.percent,
+                "memory_available_mb": round(memory.available / 1024 / 1024, 2),
+                "disk_usage_percent": disk.percent,
+                "disk_free_gb": round(disk.free / 1024 / 1024 / 1024, 2),
+                "cpu_usage_percent": psutil.cpu_percent(interval=1)
+            },
+            "uptime_seconds": int(time.time() - psutil.boot_time())
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e)
+        }
 
 @app.post("/api/keys", response_model=VPNKey)
 async def create_key(request: CreateKeyRequest, api_key: str = Depends(verify_api_key)):

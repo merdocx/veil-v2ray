@@ -7,28 +7,49 @@
       "port": 10001,
       "created_at": "2025-08-05T16:06:36.864003",
       "total_traffic": {
-        "total_bytes": 38467682.02026367,
-        "rx_bytes": 19233840.0,
-        "tx_bytes": 19233840.0,
+        "total_bytes": 7540634140.283691,
+        "rx_bytes": 3770317069.0,
+        "tx_bytes": 3770317069.0,
         "total_connections": 271
       },
       "daily_traffic": {
         "2025-08-05": {
-          "total_bytes": 38467682.02026367,
-          "rx_bytes": 19233840.0,
-          "tx_bytes": 19233840.0,
+          "total_bytes": 643625994.9213867,
+          "rx_bytes": 321812996.0,
+          "tx_bytes": 321812996.0,
           "max_connections": 271,
-          "sessions": 5
+          "sessions": 25
+        },
+        "2025-08-06": {
+          "total_bytes": 2022745562.125,
+          "rx_bytes": 1011372781.0,
+          "tx_bytes": 1011372781.0,
+          "max_connections": 48,
+          "sessions": 2
+        },
+        "2025-08-07": {
+          "total_bytes": 4874262583.237305,
+          "rx_bytes": 2437131292.0,
+          "tx_bytes": 2437131292.0,
+          "max_connections": 103,
+          "sessions": 20
+        },
+        "2025-08-08": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
         }
       },
-      "last_activity": "2025-08-05T17:49:51.981637",
-      "is_active": true,
+      "last_activity": "2025-08-08T15:32:57.427012",
+      "is_active": false,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
-        "connections": 243,
-        "timestamp": "2025-08-05T17:49:51.981631"
+        "connections": 0,
+        "timestamp": "2025-08-08T15:32:57.427004"
       }
     },
     "dc41f2d0-7741-43d2-b0c4-193cd8dd16ce": {
@@ -47,27 +68,758 @@
           "rx_bytes": 261,
           "tx_bytes": 261,
           "max_connections": 252,
-          "sessions": 23
+          "sessions": 43
+        },
+        "2025-08-06": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 46,
+          "sessions": 2
+        },
+        "2025-08-07": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 46,
+          "sessions": 42
         }
       },
-      "last_activity": "2025-08-05T17:49:51.983284",
+      "last_activity": "2025-08-07T21:43:20.698972",
       "is_active": true,
       "last_traffic": {
-        "total_bytes": 324,
-        "rx_bytes": 162,
-        "tx_bytes": 162,
-        "connections": 252,
-        "timestamp": "2025-08-05T17:49:51.983276"
+        "total_bytes": 318,
+        "rx_bytes": 159,
+        "tx_bytes": 159,
+        "connections": 46,
+        "timestamp": "2025-08-07T21:43:20.698933"
+      }
+    },
+    "9e4b7e9c-e475-475e-aa58-b775e3f4eb7d": {
+      "key_name": "user_6358556135@veilbot.com",
+      "port": 10003,
+      "created_at": "2025-08-05T18:22:22.802065",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-08-05": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-08-05T20:33:08.225925",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-08-05T20:33:08.225920"
+      }
+    },
+    "9c6ae5f0-4835-431f-ae66-345a5096fd53": {
+      "key_name": "Makarovasts@gmail.com",
+      "port": 10003,
+      "created_at": "2025-08-08T09:01:53.837079",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-08-08": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-08-09": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-08-09T11:13:15.899759",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-08-09T11:13:15.899753"
+      }
+    },
+    "510d3160-0e43-4711-b052-3f3c5de4b731": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-08-09T10:43:17.087579",
+      "total_traffic": {
+        "total_bytes": 4132126.056640625,
+        "rx_bytes": 2066063.0,
+        "tx_bytes": 2066063.0,
+        "total_connections": 106
+      },
+      "daily_traffic": {
+        "2025-08-09": {
+          "total_bytes": 4132126.056640625,
+          "rx_bytes": 2066063.0,
+          "tx_bytes": 2066063.0,
+          "max_connections": 106,
+          "sessions": 4
+        },
+        "2025-08-10": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-08-10T19:06:53.702903",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-08-10T19:06:53.702897"
+      }
+    },
+    "e0466fe2-5c6a-4fa0-a775-a68e9fd7b4e0": {
+      "key_name": "user_6358556135@veilbot.com",
+      "port": 10002,
+      "created_at": "2025-08-09T10:48:47.038565",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-08-09": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-08-09T10:48:47.040853",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-08-09T10:48:47.040849"
+      }
+    },
+    "ad9d500f-f189-44c3-91e6-835b0b408086": {
+      "key_name": "user_6358556135@veilbot.com",
+      "port": 10002,
+      "created_at": "2025-08-09T10:50:29.509967",
+      "total_traffic": {
+        "total_bytes": 318,
+        "rx_bytes": 159,
+        "tx_bytes": 159,
+        "total_connections": 46
+      },
+      "daily_traffic": {
+        "2025-08-09": {
+          "total_bytes": 318,
+          "rx_bytes": 159,
+          "tx_bytes": 159,
+          "max_connections": 46,
+          "sessions": 37
+        }
+      },
+      "last_activity": "2025-08-09T15:56:51.254842",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 318,
+        "rx_bytes": 159,
+        "tx_bytes": 159,
+        "connections": 46,
+        "timestamp": "2025-08-09T15:56:51.254836"
+      }
+    },
+    "48e4c686-2320-49e5-8997-a5478860114c": {
+      "key_name": "Mitinmen@mail.ru",
+      "port": 10001,
+      "created_at": "2025-09-09T17:45:22.491239",
+      "total_traffic": {
+        "total_bytes": 510073941127.83545,
+        "rx_bytes": 255036970566.0,
+        "tx_bytes": 255036970566.0,
+        "total_connections": 802
+      },
+      "daily_traffic": {
+        "2025-09-09": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-09-24": {
+          "total_bytes": 250846852086.6455,
+          "rx_bytes": 125423426043.0,
+          "tx_bytes": 125423426043.0,
+          "max_connections": 553,
+          "sessions": 9
+        },
+        "2025-09-26": {
+          "total_bytes": 42124667016.35889,
+          "rx_bytes": 21062333509.0,
+          "tx_bytes": 21062333509.0,
+          "max_connections": 447,
+          "sessions": 4
+        },
+        "2025-09-27": {
+          "total_bytes": 7307621935.413574,
+          "rx_bytes": 3653810969.0,
+          "tx_bytes": 3653810969.0,
+          "max_connections": 802,
+          "sessions": 10
+        },
+        "2025-10-05": {
+          "total_bytes": 140789197315,
+          "rx_bytes": 70394598658,
+          "tx_bytes": 70394598658,
+          "max_connections": 240,
+          "sessions": 2
+        },
+        "2025-10-11": {
+          "total_bytes": 69005602774.41748,
+          "rx_bytes": 34502801387.0,
+          "tx_bytes": 34502801387.0,
+          "max_connections": 131,
+          "sessions": 3
+        }
+      },
+      "last_activity": "2025-10-11T18:27:44.745530",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 105238357.74829102,
+        "rx_bytes": 52619178.0,
+        "tx_bytes": 52619178.0,
+        "connections": 39,
+        "timestamp": "2025-10-11T18:27:44.745519"
+      }
+    },
+    "df6418c5-2b88-491a-948d-080295df657e": {
+      "key_name": "test_user@veilbot.com",
+      "port": 10001,
+      "created_at": "2025-10-12T20:01:19.055355",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-10-12": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-10-12T20:01:19.059996",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-10-12T20:01:19.059989"
+      }
+    },
+    "2d1bcbe5-43c7-4892-8134-3b089bc9e1d4": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-10-12T20:04:00.881536",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-10-12": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-10-12T20:04:00.885813",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-10-12T20:04:00.885807"
+      }
+    },
+    "2c81c3f1-6d3a-4e19-8333-5e22596f9fce": {
+      "key_name": "Mitinmen@mail.ru",
+      "port": 10001,
+      "created_at": "2025-10-12T20:05:28.109199",
+      "total_traffic": {
+        "total_bytes": 19472803919.058838,
+        "rx_bytes": 9736401958.0,
+        "tx_bytes": 9736401958.0,
+        "total_connections": 265
+      },
+      "daily_traffic": {
+        "2025-10-12": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-14": {
+          "total_bytes": 4094329542.2436523,
+          "rx_bytes": 2047164771.0,
+          "tx_bytes": 2047164771.0,
+          "max_connections": 265,
+          "sessions": 7
+        },
+        "2025-10-16": {
+          "total_bytes": 15207837959.960938,
+          "rx_bytes": 7603918979.0,
+          "tx_bytes": 7603918979.0,
+          "max_connections": 110,
+          "sessions": 1
+        },
+        "2025-10-21": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-22": {
+          "total_bytes": 170636416.85424805,
+          "rx_bytes": 85318208.0,
+          "tx_bytes": 85318208.0,
+          "max_connections": 173,
+          "sessions": 1
+        }
+      },
+      "last_activity": "2025-10-22T18:29:36.781957",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 170636416.85424805,
+        "rx_bytes": 85318208.0,
+        "tx_bytes": 85318208.0,
+        "connections": 173,
+        "timestamp": "2025-10-22T18:29:36.781946"
+      }
+    },
+    "686525cc-19cc-4a11-b6cf-7de3fe7f71db": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10002,
+      "created_at": "2025-10-14T12:40:49.682295",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-10-14": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-10-14T12:40:49.687113",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-10-14T12:40:49.687108"
+      }
+    },
+    "4645db7e-6f9d-4d8b-95e6-b354dba1423d": {
+      "key_name": "user_274169054@veilbot.com",
+      "port": 10002,
+      "created_at": "2025-10-17T00:48:02.921598",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-10-17": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-10-17T00:48:02.927559",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-10-17T00:48:02.927552"
+      }
+    },
+    "a01ee7c5-e70c-4be6-9a34-ea453fdd0e8c": {
+      "key_name": "user_274169054@veilbot.com",
+      "port": 10002,
+      "created_at": "2025-10-17T00:52:11.176949",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-10-17": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-10-17T00:52:11.185861",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-10-17T00:52:11.185851"
+      }
+    },
+    "6d0b94cc-bb12-4184-a92e-c700379a4231": {
+      "key_name": "user_274169054@veilbot.com",
+      "port": 10002,
+      "created_at": "2025-10-17T17:02:32.166491",
+      "total_traffic": {
+        "total_bytes": 318,
+        "rx_bytes": 159,
+        "tx_bytes": 159,
+        "total_connections": 46
+      },
+      "daily_traffic": {
+        "2025-10-17": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-21": {
+          "total_bytes": 318,
+          "rx_bytes": 159,
+          "tx_bytes": 159,
+          "max_connections": 46,
+          "sessions": 1
+        },
+        "2025-10-22": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 1,
+          "sessions": 1
+        }
+      },
+      "last_activity": "2025-10-22T18:29:36.790313",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 27.1171875,
+        "rx_bytes": 13.0,
+        "tx_bytes": 13.0,
+        "connections": 1,
+        "timestamp": "2025-10-22T18:29:36.790306"
+      }
+    },
+    "dfda4cb9-5004-49c8-9c2b-7d0df3eeef5f": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10003,
+      "created_at": "2025-10-18T19:58:13.047833",
+      "total_traffic": {
+        "total_bytes": 708.51904296875,
+        "rx_bytes": 354.0,
+        "tx_bytes": 354.0,
+        "total_connections": 23
+      },
+      "daily_traffic": {
+        "2025-10-18": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-21": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-22": {
+          "total_bytes": 708.51904296875,
+          "rx_bytes": 354.0,
+          "tx_bytes": 354.0,
+          "max_connections": 23,
+          "sessions": 1
+        }
+      },
+      "last_activity": "2025-10-22T18:29:36.793541",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 708.51904296875,
+        "rx_bytes": 354.0,
+        "tx_bytes": 354.0,
+        "connections": 23,
+        "timestamp": "2025-10-22T18:29:36.793534"
+      }
+    },
+    "eed0b819-2e4e-41d3-a3f3-4dfde7665b62": {
+      "key_name": "pavelabashin@gmail.com",
+      "port": 10004,
+      "created_at": "2025-10-19T15:59:15.461028",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 109
+      },
+      "daily_traffic": {
+        "2025-10-19": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-21": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 109,
+          "sessions": 1
+        },
+        "2025-10-22": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-10-22T18:29:36.802186",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-10-22T18:29:36.802179"
+      }
+    },
+    "e878e2a2-cc3e-4d5c-bb3b-86864fe9315b": {
+      "key_name": "Makarovasts@gmail.com",
+      "port": 10005,
+      "created_at": "2025-10-20T02:27:03.488330",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 29
+      },
+      "daily_traffic": {
+        "2025-10-20": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-21": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 29,
+          "sessions": 1
+        },
+        "2025-10-22": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-10-22T18:29:36.804431",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-10-22T18:29:36.804426"
       }
     }
   },
   "daily_stats": {
     "2025-08-05": {
-      "total_bytes": 38472092.02026367,
+      "total_bytes": 1497710070.274414,
       "total_connections": 271,
       "active_keys": 0,
-      "total_sessions": 28
+      "total_sessions": 68
+    },
+    "2025-08-06": {
+      "total_bytes": 4834506698.25,
+      "total_connections": 48,
+      "active_keys": 0,
+      "total_sessions": 4
+    },
+    "2025-08-07": {
+      "total_bytes": 15118716475.859375,
+      "total_connections": 103,
+      "active_keys": 0,
+      "total_sessions": 62
+    },
+    "2025-08-08": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-08-09": {
+      "total_bytes": 13324896.19140625,
+      "total_connections": 106,
+      "active_keys": 0,
+      "total_sessions": 41
+    },
+    "2025-08-10": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-09-09": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-09-24": {
+      "total_bytes": 501444873119.50635,
+      "total_connections": 553,
+      "active_keys": 0,
+      "total_sessions": 9
+    },
+    "2025-09-26": {
+      "total_bytes": 42333785923.85083,
+      "total_connections": 447,
+      "active_keys": 0,
+      "total_sessions": 4
+    },
+    "2025-09-27": {
+      "total_bytes": 7451515852.084717,
+      "total_connections": 802,
+      "active_keys": 0,
+      "total_sessions": 10
+    },
+    "2025-10-05": {
+      "total_bytes": 147810523619.45557,
+      "total_connections": 240,
+      "active_keys": 0,
+      "total_sessions": 2
+    },
+    "2025-10-11": {
+      "total_bytes": 69449045442.9851,
+      "total_connections": 131,
+      "active_keys": 0,
+      "total_sessions": 3
+    },
+    "2025-10-12": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-10-14": {
+      "total_bytes": 4329416108.524902,
+      "total_connections": 265,
+      "active_keys": 0,
+      "total_sessions": 7
+    },
+    "2025-10-16": {
+      "total_bytes": 15207837959.960938,
+      "total_connections": 110,
+      "active_keys": 0,
+      "total_sessions": 1
+    },
+    "2025-10-17": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-10-18": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-10-19": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-10-20": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-10-21": {
+      "total_bytes": 318,
+      "total_connections": 109,
+      "active_keys": 0,
+      "total_sessions": 3
+    },
+    "2025-10-22": {
+      "total_bytes": 170637152.49047852,
+      "total_connections": 173,
+      "active_keys": 0,
+      "total_sessions": 3
     }
   },
-  "last_update": "2025-08-05T17:49:51.983290"
+  "last_update": "2025-10-22T18:29:36.804438"
 }

@@ -1,0 +1,73 @@
+{
+  "used_ports": {
+    "10001": {
+      "uuid": "2c81c3f1-6d3a-4e19-8333-5e22596f9fce",
+      "key_id": "b5bc20a8-698d-4814-81af-321c35ff9b24",
+      "key_name": "Mitinmen@mail.ru",
+      "assigned_at": "2025-10-12T20:05:26.056300",
+      "is_active": true
+    },
+    "10002": {
+      "uuid": "6d0b94cc-bb12-4184-a92e-c700379a4231",
+      "key_id": "2e576331-4018-4ccd-b638-87807f0aaa16",
+      "key_name": "user_274169054@veilbot.com",
+      "assigned_at": "2025-10-17T17:02:30.120258",
+      "is_active": true
+    },
+    "10003": {
+      "uuid": "dfda4cb9-5004-49c8-9c2b-7d0df3eeef5f",
+      "key_id": "ec77fa23-9cc1-435d-8e97-c84a1224bd2b",
+      "key_name": "nvipetrenko@gmail.com",
+      "assigned_at": "2025-10-18T19:58:10.987337",
+      "is_active": true
+    },
+    "10004": {
+      "uuid": "eed0b819-2e4e-41d3-a3f3-4dfde7665b62",
+      "key_id": "1c391ac8-00aa-47e3-942e-b22a0bc67e15",
+      "key_name": "pavelabashin@gmail.com",
+      "assigned_at": "2025-10-19T15:59:13.396445",
+      "is_active": true
+    },
+    "10005": {
+      "uuid": "e878e2a2-cc3e-4d5c-bb3b-86864fe9315b",
+      "key_id": "ad5c9031-352f-4835-9ae6-5b873402a392",
+      "key_name": "Makarovasts@gmail.com",
+      "assigned_at": "2025-10-20T02:27:01.434842",
+      "is_active": true
+    }
+  },
+  "port_assignments": {
+    "2c81c3f1-6d3a-4e19-8333-5e22596f9fce": {
+      "port": 10001,
+      "key_id": "b5bc20a8-698d-4814-81af-321c35ff9b24",
+      "key_name": "Mitinmen@mail.ru",
+      "assigned_at": "2025-10-12T20:05:26.056326"
+    },
+    "6d0b94cc-bb12-4184-a92e-c700379a4231": {
+      "port": 10002,
+      "key_id": "2e576331-4018-4ccd-b638-87807f0aaa16",
+      "key_name": "user_274169054@veilbot.com",
+      "assigned_at": "2025-10-17T17:02:30.120276"
+    },
+    "dfda4cb9-5004-49c8-9c2b-7d0df3eeef5f": {
+      "port": 10003,
+      "key_id": "ec77fa23-9cc1-435d-8e97-c84a1224bd2b",
+      "key_name": "nvipetrenko@gmail.com",
+      "assigned_at": "2025-10-18T19:58:10.987356"
+    },
+    "eed0b819-2e4e-41d3-a3f3-4dfde7665b62": {
+      "port": 10004,
+      "key_id": "1c391ac8-00aa-47e3-942e-b22a0bc67e15",
+      "key_name": "pavelabashin@gmail.com",
+      "assigned_at": "2025-10-19T15:59:13.396465"
+    },
+    "e878e2a2-cc3e-4d5c-bb3b-86864fe9315b": {
+      "port": 10005,
+      "key_id": "ad5c9031-352f-4835-9ae6-5b873402a392",
+      "key_name": "Makarovasts@gmail.com",
+      "assigned_at": "2025-10-20T02:27:01.434859"
+    }
+  },
+  "created_at": "2025-08-04T12:24:35.028840",
+  "last_updated": "2025-10-20T02:27:01.434862"
+}
