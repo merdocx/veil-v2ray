@@ -110,3 +110,6 @@ echo "7. Нажмите 'Publish release'"
 
 print_info "Или используйте GitHub CLI (если установлен):"
 echo "gh release create $VERSION /tmp/$ARCHIVE_NAME --title '$VERSION' --notes '$DESCRIPTION'"
+
+
+

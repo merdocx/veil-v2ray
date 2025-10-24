@@ -96,3 +96,6 @@ echo "  git push --tags              # Загрузка всех тегов"
 
 print_warning "Токен сохранен в ~/.git-credentials"
 print_warning "Убедитесь, что этот файл защищен от несанкционированного доступа!"
+
+
+

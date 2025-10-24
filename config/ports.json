@@ -7,32 +7,46 @@
       "assigned_at": "2025-10-12T20:05:26.056300",
       "is_active": true
     },
-    "10002": {
-      "uuid": "6d0b94cc-bb12-4184-a92e-c700379a4231",
-      "key_id": "2e576331-4018-4ccd-b638-87807f0aaa16",
-      "key_name": "user_274169054@veilbot.com",
-      "assigned_at": "2025-10-17T17:02:30.120258",
-      "is_active": true
-    },
-    "10003": {
-      "uuid": "dfda4cb9-5004-49c8-9c2b-7d0df3eeef5f",
-      "key_id": "ec77fa23-9cc1-435d-8e97-c84a1224bd2b",
-      "key_name": "nvipetrenko@gmail.com",
-      "assigned_at": "2025-10-18T19:58:10.987337",
-      "is_active": true
-    },
     "10004": {
-      "uuid": "eed0b819-2e4e-41d3-a3f3-4dfde7665b62",
-      "key_id": "1c391ac8-00aa-47e3-942e-b22a0bc67e15",
+      "uuid": "d88b18cb-068b-46ae-826e-2d6be2a65286",
+      "key_id": "d8510d08-cd0f-458e-be3d-e921899779bb",
       "key_name": "pavelabashin@gmail.com",
-      "assigned_at": "2025-10-19T15:59:13.396445",
+      "assigned_at": "2025-10-24T12:58:38.725355",
+      "is_active": true
+    },
+    "10007": {
+      "uuid": "5dac3379-fd1d-4035-a2a3-1f5ec68e0f25",
+      "key_id": "98b790d0-f344-4f08-8a85-5e8c94b4b2a1",
+      "key_name": "free@ya.ru",
+      "assigned_at": "2025-10-24T13:04:24.476860",
+      "is_active": true
+    },
+    "10002": {
+      "uuid": "e3945369-cd91-451f-bd70-6136d57bdc58",
+      "key_id": "879dfbbd-16a7-4044-919a-621b05326ab1",
+      "key_name": "Makarovasts@gmail.com",
+      "assigned_at": "2025-10-24T13:14:51.638024",
       "is_active": true
     },
     "10005": {
-      "uuid": "e878e2a2-cc3e-4d5c-bb3b-86864fe9315b",
-      "key_id": "ad5c9031-352f-4835-9ae6-5b873402a392",
+      "uuid": "7678ba35-664d-4559-a8d4-89c4181e82e3",
+      "key_id": "8e5be429-350c-4eec-8022-d7d90e7a8ec6",
+      "key_name": "nvipetrenko@gmail.com",
+      "assigned_at": "2025-10-24T13:22:35.782153",
+      "is_active": true
+    },
+    "10003": {
+      "uuid": "ccc02a98-5708-492a-9780-ff23413b0ed7",
+      "key_id": "275750d1-7aa4-41b0-9a1e-cddeba9c3183",
+      "key_name": "user_274169054@veilbot.com",
+      "assigned_at": "2025-10-24T13:31:31.068553",
+      "is_active": true
+    },
+    "10006": {
+      "uuid": "dd911e9b-4c66-4cce-8535-ba810e400fec",
+      "key_id": "4bc8316f-7579-4283-bcfd-ea7535455c68",
       "key_name": "Makarovasts@gmail.com",
-      "assigned_at": "2025-10-20T02:27:01.434842",
+      "assigned_at": "2025-10-24T13:42:46.504018",
       "is_active": true
     }
   },
@@ -43,31 +57,43 @@
       "key_name": "Mitinmen@mail.ru",
       "assigned_at": "2025-10-12T20:05:26.056326"
     },
-    "6d0b94cc-bb12-4184-a92e-c700379a4231": {
-      "port": 10002,
-      "key_id": "2e576331-4018-4ccd-b638-87807f0aaa16",
-      "key_name": "user_274169054@veilbot.com",
-      "assigned_at": "2025-10-17T17:02:30.120276"
-    },
-    "dfda4cb9-5004-49c8-9c2b-7d0df3eeef5f": {
-      "port": 10003,
-      "key_id": "ec77fa23-9cc1-435d-8e97-c84a1224bd2b",
-      "key_name": "nvipetrenko@gmail.com",
-      "assigned_at": "2025-10-18T19:58:10.987356"
-    },
-    "eed0b819-2e4e-41d3-a3f3-4dfde7665b62": {
+    "d88b18cb-068b-46ae-826e-2d6be2a65286": {
       "port": 10004,
-      "key_id": "1c391ac8-00aa-47e3-942e-b22a0bc67e15",
+      "key_id": "d8510d08-cd0f-458e-be3d-e921899779bb",
       "key_name": "pavelabashin@gmail.com",
-      "assigned_at": "2025-10-19T15:59:13.396465"
+      "assigned_at": "2025-10-24T12:58:38.725385"
     },
-    "e878e2a2-cc3e-4d5c-bb3b-86864fe9315b": {
-      "port": 10005,
-      "key_id": "ad5c9031-352f-4835-9ae6-5b873402a392",
+    "5dac3379-fd1d-4035-a2a3-1f5ec68e0f25": {
+      "port": 10007,
+      "key_id": "98b790d0-f344-4f08-8a85-5e8c94b4b2a1",
+      "key_name": "free@ya.ru",
+      "assigned_at": "2025-10-24T13:04:24.476885"
+    },
+    "e3945369-cd91-451f-bd70-6136d57bdc58": {
+      "port": 10002,
+      "key_id": "879dfbbd-16a7-4044-919a-621b05326ab1",
       "key_name": "Makarovasts@gmail.com",
-      "assigned_at": "2025-10-20T02:27:01.434859"
+      "assigned_at": "2025-10-24T13:14:51.638054"
+    },
+    "7678ba35-664d-4559-a8d4-89c4181e82e3": {
+      "port": 10005,
+      "key_id": "8e5be429-350c-4eec-8022-d7d90e7a8ec6",
+      "key_name": "nvipetrenko@gmail.com",
+      "assigned_at": "2025-10-24T13:22:35.782174"
+    },
+    "ccc02a98-5708-492a-9780-ff23413b0ed7": {
+      "port": 10003,
+      "key_id": "275750d1-7aa4-41b0-9a1e-cddeba9c3183",
+      "key_name": "user_274169054@veilbot.com",
+      "assigned_at": "2025-10-24T13:31:31.068579"
+    },
+    "dd911e9b-4c66-4cce-8535-ba810e400fec": {
+      "port": 10006,
+      "key_id": "4bc8316f-7579-4283-bcfd-ea7535455c68",
+      "key_name": "Makarovasts@gmail.com",
+      "assigned_at": "2025-10-24T13:42:46.504040"
     }
   },
   "created_at": "2025-08-04T12:24:35.028840",
-  "last_updated": "2025-10-20T02:27:01.434862"
+  "last_updated": "2025-10-24T13:42:46.504045"
 }

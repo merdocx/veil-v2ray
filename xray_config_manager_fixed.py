@@ -30,11 +30,7 @@ class XrayConfigManager:
                 for line in f:
                     line = line.strip()
                     if line.startswith('PRIVATE_KEY='):
-                        # Извлекаем приватный ключ, убирая префикс "Private key: "
-                        private_key = line.split('=', 1)[1].strip()
-                        if private_key.startswith('Private key: '):
-                            private_key = private_key.replace('Private key: ', '')
-                        keys['private_key'] = private_key
+                        keys['private_key'] = line.split('=', 1)[1].strip()
                     elif line.startswith('PUBLIC_KEY='):
                         keys['public_key'] = line.split('=', 1)[1].strip()
                     elif line.startswith('SHORT_ID='):
@@ -140,7 +136,7 @@ class XrayConfigManager:
         return inbound
     
     def add_key_to_config(self, uuid: str, key_name: str) -> bool:
-        """Добавление ключа в конфигурацию Xray с проверкой Reality ключей"""
+        """Добавление ключа в конфигурацию Xray"""
         try:
             # Создаем резервную копию
             backup_file = self._backup_config()
@@ -153,18 +149,7 @@ class XrayConfigManager:
             # Создаем inbound для ключа
             inbound = self.create_inbound_for_key(uuid, key_name)
             if not inbound:
-                print(f"Failed to create inbound for key {uuid}")
                 return False
-            
-            # Проверяем, что используются правильные Reality ключи
-            reality_keys = self._load_reality_keys()
-            if inbound.get('streamSettings', {}).get('realitySettings', {}).get('privateKey') != reality_keys.get('private_key'):
-                print("Warning: Reality private key mismatch, correcting...")
-                inbound['streamSettings']['realitySettings']['privateKey'] = reality_keys.get('private_key')
-            
-            if inbound.get('streamSettings', {}).get('realitySettings', {}).get('shortIds', [None])[0] != reality_keys.get('short_id'):
-                print("Warning: Reality short ID mismatch, correcting...")
-                inbound['streamSettings']['realitySettings']['shortIds'] = [reality_keys.get('short_id')]
             
             # Добавляем inbound в конфигурацию
             config["inbounds"].append(inbound)
@@ -175,10 +160,7 @@ class XrayConfigManager:
                 return False
             
             # Сохраняем конфигурацию
-            success = self._save_config(config)
-            if success:
-                print(f"Successfully added key {uuid} to Xray config with centralized Reality keys")
-            return success
+            return self._save_config(config)
             
         except Exception as e:
             print(f"Error adding key to config: {e}")
@@ -269,49 +251,6 @@ class XrayConfigManager:
         except Exception as e:
             return {"status": "error", "message": str(e)}
     
-    def fix_reality_keys_in_config(self) -> bool:
-        """Исправление Reality ключей во всех inbound'ах конфигурации"""
-        try:
-            config = self._load_config()
-            if not config:
-                return False
-            
-            # Загружаем централизованные Reality ключи
-            reality_keys = self._load_reality_keys()
-            if not reality_keys.get('private_key') or not reality_keys.get('short_id'):
-                print("Error: Centralized Reality keys not found")
-                return False
-            
-            fixed_count = 0
-            for inbound in config.get("inbounds", []):
-                if (inbound.get("protocol") == "vless" and 
-                    inbound.get("streamSettings", {}).get("security") == "reality"):
-                    
-                    reality_settings = inbound["streamSettings"]["realitySettings"]
-                    
-                    # Исправляем приватный ключ
-                    if reality_settings.get("privateKey") != reality_keys['private_key']:
-                        reality_settings["privateKey"] = reality_keys['private_key']
-                        fixed_count += 1
-                        print(f"Fixed private key for inbound {inbound.get('tag', 'unknown')}")
-                    
-                    # Исправляем Short ID
-                    if reality_settings.get("shortIds", [None])[0] != reality_keys['short_id']:
-                        reality_settings["shortIds"] = [reality_keys['short_id']]
-                        fixed_count += 1
-                        print(f"Fixed short ID for inbound {inbound.get('tag', 'unknown')}")
-            
-            if fixed_count > 0:
-                print(f"Fixed Reality keys in {fixed_count} inbound(s)")
-                return self._save_config(config)
-            else:
-                print("All Reality keys are already correct")
-                return True
-                
-        except Exception as e:
-            print(f"Error fixing Reality keys: {e}")
-            return False
-    
     def validate_config_sync(self, keys: List[Dict]) -> Dict:
         """Валидация синхронизации конфигурации"""
         try:
@@ -367,6 +306,3 @@ def validate_xray_config_sync(keys: List[Dict]) -> Dict:
     """Валидация синхронизации конфигурации Xray"""
     return xray_config_manager.validate_config_sync(keys)
 
-def fix_reality_keys_in_xray_config() -> bool:
-    """Исправление Reality ключей в конфигурации Xray"""
-    return xray_config_manager.fix_reality_keys_in_config()

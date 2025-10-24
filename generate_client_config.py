@@ -2,7 +2,6 @@
 import json
 import sys
 import os
-import subprocess
 
 def generate_client_config(key_uuid, key_name, port=None):
     """Генерация конфигурации клиента для VLESS+Reality"""
@@ -37,78 +36,45 @@ def generate_client_config(key_uuid, key_name, port=None):
     short_id = reality_settings['shortIds'][0]
     server_names = reality_settings['serverNames']
     
-    # Генерация публичного ключа из приватного
+    # Загрузка публичного ключа из keys.env
+    public_key = None
     try:
-        result = subprocess.run([
-            '/usr/local/bin/xray', 'x25519', '-i', private_key
-        ], capture_output=True, text=True, check=True)
-        
-        # Извлекаем публичный ключ из вывода
-        public_key = None
-        for line in result.stdout.split('\n'):
-            if 'Public key:' in line:
-                public_key = line.split(':')[1].strip()
-                break
-        
-        if not public_key:
-            print("Ошибка: не удалось извлечь публичный ключ")
-            sys.exit(1)
-            
-    except subprocess.CalledProcessError as e:
-        print(f"Ошибка генерации публичного ключа: {e}")
+        with open('/root/vpn-server/config/keys.env', 'r') as f:
+            for line in f:
+                if line.startswith('PUBLIC_KEY='):
+                    public_key = line.split('=', 1)[1].strip()
+                    break
+    except FileNotFoundError:
+        pass
+    
+    if not public_key:
+        print("Ошибка: не удалось найти публичный ключ")
         sys.exit(1)
     
-
+    # Получение IP сервера
+    server_ip = "146.103.100.14"  # Захардкоженный IP
     
-    # Определение порта
-    if port is None:
-        # Если порт не передан, используем 443 (для обратной совместимости)
-        port = 443
-    
-    # Создание конфигурации клиента
-    client_config = {
-        "v": "2",
-        "ps": f"VLESS+Reality - {key_name}",
-        "add": "veil-bird.ru",
-        "port": str(port),
-        "id": key_uuid,
-        "aid": "0",
-        "net": "tcp",
-        "type": "http",
-        "host": server_names[0],
-        "path": "",
-        "tls": "reality",
-        "sni": server_names[0],
-        "fp": "chrome",
-        "pbk": public_key,
-        "sid": short_id,
-        "spx": "/"
-    }
+    # Использование порта из inbound, если не указан
+    if not port:
+        port = vless_inbound['port']
     
     # Генерация VLESS URL
-    vless_url = f"vless://{key_uuid}@veil-bird.ru:{port}?encryption=none&security=reality&sni={server_names[0]}&fp=chrome&pbk={public_key}&sid={short_id}&spx=/&type=tcp&flow=#{key_name}"
+    vless_url = f"vless://{key_uuid}@{server_ip}:{port}?type=tcp&security=reality&sni={server_names[0]}&pbk={public_key}&sid={short_id}&fp=chrome#{key_name}"
     
-    return {
-        "config": client_config,
-        "vless_url": vless_url,
-        "qr_code_data": vless_url
-    }
+    return vless_url
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Использование: python3 generate_client_config.py <key_uuid> <key_name> [port]")
+        print("Использование: python3 generate_client_config.py <uuid> <name> [port]")
         sys.exit(1)
     
     key_uuid = sys.argv[1]
     key_name = sys.argv[2]
-    port = int(sys.argv[3]) if len(sys.argv) > 3 else None
+    port = sys.argv[3] if len(sys.argv) > 3 else None
     
-    result = generate_client_config(key_uuid, key_name, port)
-    
-    print("=== Конфигурация клиента ===")
-    print(f"Имя: {key_name}")
-    print(f"UUID: {key_uuid}")
-    print(f"Порт: {result['config']['port']}")
-    print(f"VLESS URL: {result['vless_url']}")
-    print("\n=== QR код данные ===")
-    print(result['qr_code_data']) 
+    try:
+        config = generate_client_config(key_uuid, key_name, port)
+        print(config)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        sys.exit(1)

@@ -97,3 +97,6 @@ print_info "Версия: $VERSION"
 print_info "Описание: $DESCRIPTION"
 print_info "Репозиторий: https://github.com/merdocx/veil-v2ray"
 print_info "Релизы: https://github.com/merdocx/veil-v2ray/releases"
+
+
+

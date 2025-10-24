@@ -25,7 +25,7 @@ load_env_file()
 
 # Импорт модулей для мониторинга
 from port_manager import port_manager, assign_port_for_key, release_port_for_key, get_port_for_key, get_all_port_assignments, reset_all_ports
-from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync
+from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync, fix_reality_keys_in_xray_config
 from simple_traffic_monitor import get_simple_uuid_traffic, get_simple_all_ports_traffic, reset_simple_uuid_traffic
 from traffic_history_manager import traffic_history
 
@@ -651,6 +651,30 @@ async def validate_xray_config_sync_endpoint(api_key: str = Depends(verify_api_k
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to validate Xray config sync: {str(e)}")
+
+@app.post("/api/system/fix-reality-keys")
+async def fix_reality_keys(api_key: str = Depends(verify_api_key)):
+    """Исправление Reality ключей в конфигурации Xray"""
+    try:
+        if fix_reality_keys_in_xray_config():
+            if restart_xray():
+                return {
+                    "status": "fixed",
+                    "message": "Reality keys fixed successfully",
+                    "timestamp": int(time.time())
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": "Failed to restart Xray service"
+                }
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to fix Reality keys"
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ===== ЭНДПОИНТЫ ТОЧНОГО МОНИТОРИНГА ТРАФИКА =====
 
