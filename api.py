@@ -45,6 +45,12 @@ from port_manager import port_manager, assign_port_for_key, release_port_for_key
 from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync, fix_reality_keys_in_xray_config
 from simple_traffic_monitor import get_simple_uuid_traffic, get_simple_all_ports_traffic, reset_simple_uuid_traffic
 from traffic_history_manager import traffic_history
+try:
+    from xray_stats_reader import get_xray_user_traffic, get_all_xray_users_traffic
+    XRAY_STATS_AVAILABLE = True
+except ImportError:
+    XRAY_STATS_AVAILABLE = False
+    logging.warning("xray_stats_reader недоступен, используется fallback")
 
 app = FastAPI(title="VPN Key Management API", version="1.0.0")
 
@@ -720,7 +726,7 @@ async def get_simple_traffic(api_key: str = Depends(verify_api_key)):
 
 @app.get("/api/keys/{key_id}/traffic/simple")
 async def get_key_simple_traffic(key_id: str, api_key: str = Depends(verify_api_key)):
-    """Получение простого трафика для конкретного ключа"""
+    """Получение простого трафика для конкретного ключа (приоритет: Xray Stats API)"""
     try:
         # Находим UUID по key_id
         keys = load_keys()
@@ -730,7 +736,28 @@ async def get_key_simple_traffic(key_id: str, api_key: str = Depends(verify_api_
             raise HTTPException(status_code=404, detail="Key not found")
         
         uuid = key["uuid"]
-        result = get_simple_uuid_traffic(uuid)
+        
+        # Приоритет: используем Xray Stats API если доступен
+        if XRAY_STATS_AVAILABLE:
+            try:
+                xray_stats = get_xray_user_traffic(uuid)
+                result = {
+                    "uuid": uuid,
+                    "port": key.get("port"),
+                    "uplink": xray_stats.get("uplink", 0),
+                    "downlink": xray_stats.get("downlink", 0),
+                    "total_bytes": xray_stats.get("total", 0),
+                    "uplink_formatted": f"{xray_stats.get('uplink', 0) / (1024**2):.2f} MB",
+                    "downlink_formatted": f"{xray_stats.get('downlink', 0) / (1024**2):.2f} MB",
+                    "total_formatted": f"{xray_stats.get('total', 0) / (1024**2):.2f} MB",
+                    "source": "xray_stats_api",
+                    "timestamp": datetime.now().isoformat()
+                }
+            except Exception as e:
+                logging.warning(f"Xray Stats API недоступен, используем fallback: {e}")
+                result = get_simple_uuid_traffic(uuid)
+        else:
+            result = get_simple_uuid_traffic(uuid)
         
         return {
             "status": "success",
@@ -812,15 +839,24 @@ async def get_key_traffic_history(key_id: str, api_key: str = Depends(verify_api
         if not key:
             raise HTTPException(status_code=404, detail="Key not found")
         
-        # Обновляем историю на основе текущих данных
-        current_traffic = get_simple_uuid_traffic(key["uuid"])
-        if current_traffic and "error" not in current_traffic:
+        # Обновляем историю на основе реальных данных из Xray Stats API
+        if XRAY_STATS_AVAILABLE:
+            # Используем Xray Stats API для обновления
             traffic_history.update_key_traffic(
                 key["uuid"], 
                 key["name"], 
-                key.get("port", 0), 
-                current_traffic
+                key.get("port", 0)
             )
+        else:
+            # Fallback на старый метод
+            current_traffic = get_simple_uuid_traffic(key["uuid"])
+            if current_traffic and "error" not in current_traffic:
+                traffic_history.update_key_traffic(
+                    key["uuid"], 
+                    key["name"], 
+                    key.get("port", 0), 
+                    current_traffic
+                )
         
         # Получаем историю ключа
         result = traffic_history.get_key_total_traffic(key["uuid"])
@@ -907,15 +943,25 @@ async def get_monthly_traffic_stats(year_month: Optional[str] = None, api_key: s
 
         for key in keys:
             if key.get("is_active", True):
-                port = key.get("port")
-                if port and str(port) in current_traffic["ports"]:
-                    port_traffic = current_traffic["ports"][str(port)]
+                if XRAY_STATS_AVAILABLE:
+                    # Используем Xray Stats API
                     traffic_history.update_key_traffic(
                         key["uuid"],
                         key["name"],
-                        port,
-                        port_traffic
+                        key.get("port", 0)
                     )
+                else:
+                    # Fallback на старый метод
+                    port = key.get("port")
+                    current_traffic = get_simple_all_ports_traffic()
+                    if port and str(port) in current_traffic.get("ports", {}):
+                        port_traffic = current_traffic["ports"][str(port)]
+                        traffic_history.update_key_traffic(
+                            key["uuid"],
+                            key["name"],
+                            port,
+                            port_traffic
+                        )
 
         # Получаем месячную статистику
         result = traffic_history.get_monthly_stats(year_month)

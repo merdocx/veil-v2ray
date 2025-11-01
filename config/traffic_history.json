@@ -1839,10 +1839,12 @@
       "port": 10003,
       "created_at": "2025-10-24T13:31:33.106011",
       "total_traffic": {
-        "total_bytes": 47330702844.28931,
-        "rx_bytes": 23665351421.0,
-        "tx_bytes": 23665351421.0,
-        "total_connections": 331
+        "total_bytes": 47985451557.23364,
+        "rx_bytes": 23950337456.0,
+        "tx_bytes": 23793513874.0,
+        "total_connections": 331,
+        "uplink": 2949600,
+        "downlink": 238650623
       },
       "daily_traffic": {
         "2025-10-24": {
@@ -1874,21 +1876,26 @@
           "sessions": 1
         },
         "2025-11-01": {
-          "total_bytes": 235284589.37402344,
-          "rx_bytes": 117642294.0,
-          "tx_bytes": 117642294.0,
+          "total_bytes": 729475414.3183594,
+          "rx_bytes": 482588217.0,
+          "tx_bytes": 246887194.0,
           "max_connections": 331,
-          "sessions": 12
+          "sessions": 22
         }
       },
-      "last_activity": "2025-11-01T19:01:41.666751",
-      "is_active": true,
+      "last_activity": "2025-11-01T21:54:00.341510",
+      "is_active": false,
       "last_traffic": {
-        "total_bytes": 0,
-        "rx_bytes": 0,
-        "tx_bytes": 0,
-        "connections": 7,
-        "timestamp": "2025-11-01T19:01:41.666740"
+        "total_bytes": 81042335,
+        "rx_bytes": 79959888,
+        "tx_bytes": 1082447,
+        "connections": 0,
+        "timestamp": "2025-11-01T21:54:00.341505"
+      },
+      "last_xray_stats": {
+        "uplink": 2949600,
+        "downlink": 238650623,
+        "timestamp": "2025-11-01T21:54:00.341449"
       }
     },
     "dd911e9b-4c66-4cce-8535-ba810e400fec": {
@@ -1899,7 +1906,9 @@
         "total_bytes": 228,
         "rx_bytes": 114,
         "tx_bytes": 114,
-        "total_connections": 471
+        "total_connections": 471,
+        "uplink": 0,
+        "downlink": 0
       },
       "daily_traffic": {
         "2025-10-24": {
@@ -1938,14 +1947,19 @@
           "sessions": 19
         }
       },
-      "last_activity": "2025-11-01T19:01:41.675306",
+      "last_activity": "2025-11-01T21:54:00.313129",
       "is_active": false,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
         "connections": 0,
-        "timestamp": "2025-11-01T19:01:41.675295"
+        "timestamp": "2025-11-01T21:54:00.313125"
+      },
+      "last_xray_stats": {
+        "uplink": 0,
+        "downlink": 0,
+        "timestamp": "2025-11-01T21:54:00.313068"
       }
     },
     "16973cb3-8721-483d-88e1-a9a18152fed1": {
@@ -1953,10 +1967,12 @@
       "port": 10008,
       "created_at": "2025-10-24T14:51:44.593026",
       "total_traffic": {
-        "total_bytes": 2466.778564453125,
-        "rx_bytes": 1233.0,
-        "tx_bytes": 1233.0,
-        "total_connections": 65
+        "total_bytes": 78295.77856445312,
+        "rx_bytes": 2813.0,
+        "tx_bytes": 2108.0,
+        "total_connections": 65,
+        "uplink": 33174,
+        "downlink": 40200
       },
       "daily_traffic": {
         "2025-10-24": {
@@ -1988,21 +2004,26 @@
           "sessions": 1
         },
         "2025-11-01": {
-          "total_bytes": 0,
-          "rx_bytes": 0,
-          "tx_bytes": 0,
+          "total_bytes": 73374,
+          "rx_bytes": 40200,
+          "tx_bytes": 33174,
           "max_connections": 65,
-          "sessions": 19
+          "sessions": 30
         }
       },
-      "last_activity": "2025-11-01T19:01:41.682415",
-      "is_active": true,
+      "last_activity": "2025-11-01T21:54:00.281951",
+      "is_active": false,
       "last_traffic": {
-        "total_bytes": 0,
-        "rx_bytes": 0,
-        "tx_bytes": 0,
-        "connections": 3,
-        "timestamp": "2025-11-01T19:01:41.682405"
+        "total_bytes": 70919,
+        "rx_bytes": 38620,
+        "tx_bytes": 32299,
+        "connections": 0,
+        "timestamp": "2025-11-01T21:54:00.281948"
+      },
+      "last_xray_stats": {
+        "uplink": 33174,
+        "downlink": 40200,
+        "timestamp": "2025-11-01T21:54:00.281891"
       }
     },
     "f7c0a889-cb99-4fe5-91ca-9b9ea2d5fc52": {
@@ -2013,7 +2034,9 @@
         "total_bytes": 66,
         "rx_bytes": 33,
         "tx_bytes": 33,
-        "total_connections": 83
+        "total_connections": 83,
+        "uplink": 0,
+        "downlink": 0
       },
       "daily_traffic": {
         "2025-10-24": {
@@ -2052,14 +2075,19 @@
           "sessions": 1
         }
       },
-      "last_activity": "2025-11-01T19:01:41.691274",
+      "last_activity": "2025-11-01T21:54:00.496446",
       "is_active": false,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
         "connections": 0,
-        "timestamp": "2025-11-01T19:01:41.691263"
+        "timestamp": "2025-11-01T21:54:00.496440"
+      },
+      "last_xray_stats": {
+        "uplink": 0,
+        "downlink": 0,
+        "timestamp": "2025-11-01T21:54:00.496381"
       }
     },
     "ff8b49e0-29e6-421f-940c-996996c35280": {
@@ -2070,7 +2098,9 @@
         "total_bytes": 3247.21875,
         "rx_bytes": 1623.0,
         "tx_bytes": 1623.0,
-        "total_connections": 87
+        "total_connections": 87,
+        "uplink": 0,
+        "downlink": 0
       },
       "daily_traffic": {
         "2025-10-24": {
@@ -2106,17 +2136,22 @@
           "rx_bytes": 234,
           "tx_bytes": 234,
           "max_connections": 87,
-          "sessions": 21
+          "sessions": 32
         }
       },
-      "last_activity": "2025-11-01T19:01:41.699743",
-      "is_active": true,
+      "last_activity": "2025-11-01T21:54:00.408496",
+      "is_active": false,
       "last_traffic": {
-        "total_bytes": 468,
-        "rx_bytes": 234,
-        "tx_bytes": 234,
-        "connections": 87,
-        "timestamp": "2025-11-01T19:01:41.699732"
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T21:54:00.408491"
+      },
+      "last_xray_stats": {
+        "uplink": 0,
+        "downlink": 0,
+        "timestamp": "2025-11-01T21:54:00.408436"
       }
     },
     "85264fdd-8474-41ff-8afb-3135d75acf4e": {
@@ -2450,28 +2485,35 @@
       "port": 10001,
       "created_at": "2025-11-01T18:52:07.546226",
       "total_traffic": {
-        "total_bytes": 0,
-        "rx_bytes": 0,
-        "tx_bytes": 0,
-        "total_connections": 12
+        "total_bytes": 135194645,
+        "rx_bytes": 54000979,
+        "tx_bytes": 796481,
+        "total_connections": 12,
+        "uplink": 1550587,
+        "downlink": 78846598
       },
       "daily_traffic": {
         "2025-11-01": {
-          "total_bytes": 0,
-          "rx_bytes": 0,
-          "tx_bytes": 0,
+          "total_bytes": 80397185,
+          "rx_bytes": 78846598,
+          "tx_bytes": 1550587,
           "max_connections": 12,
-          "sessions": 1
+          "sessions": 12
         }
       },
-      "last_activity": "2025-11-01T19:01:41.707495",
-      "is_active": true,
+      "last_activity": "2025-11-01T21:54:00.377547",
+      "is_active": false,
       "last_traffic": {
-        "total_bytes": 0,
-        "rx_bytes": 0,
-        "tx_bytes": 0,
-        "connections": 12,
-        "timestamp": "2025-11-01T19:01:41.707485"
+        "total_bytes": 12471741,
+        "rx_bytes": 12259984,
+        "tx_bytes": 211757,
+        "connections": 0,
+        "timestamp": "2025-11-01T21:54:00.377542"
+      },
+      "last_xray_stats": {
+        "uplink": 1550587,
+        "downlink": 78846598,
+        "timestamp": "2025-11-01T21:54:00.377488"
       }
     }
   },
@@ -2639,11 +2681,11 @@
       "total_sessions": 4
     },
     "2025-11-01": {
-      "total_bytes": 17607829659.656982,
+      "total_bytes": 18296158053.800537,
       "total_connections": 471,
       "active_keys": 0,
-      "total_sessions": 74
+      "total_sessions": 117
     }
   },
-  "last_update": "2025-11-01T19:01:41.707502"
+  "last_update": "2025-11-01T21:54:00.496456"
 }

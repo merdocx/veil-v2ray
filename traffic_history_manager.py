@@ -11,6 +11,14 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import logging
 
+# Импорт для работы с Xray Stats API
+try:
+    from xray_stats_reader import get_xray_user_traffic
+    XRAY_STATS_AVAILABLE = True
+except ImportError:
+    XRAY_STATS_AVAILABLE = False
+    logger.warning("xray_stats_reader недоступен, используется fallback")
+
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -61,7 +69,7 @@ class TrafficHistoryManager:
             logger.error(f"Ошибка сохранения истории трафика: {e}")
     
     def update_key_traffic(self, key_uuid: str, key_name: str, port: int, 
-                          current_traffic: Dict[str, Any]):
+                          current_traffic: Optional[Dict[str, Any]] = None):
         """Обновляет данные трафика для конкретного ключа"""
         history = self._load_history()
         
@@ -75,36 +83,117 @@ class TrafficHistoryManager:
                     "total_bytes": 0,
                     "rx_bytes": 0,
                     "tx_bytes": 0,
+                    "uplink": 0,
+                    "downlink": 0,
                     "total_connections": 0
                 },
                 "daily_traffic": {},
                 "last_activity": None,
-                "is_active": False
+                "is_active": False,
+                "last_xray_stats": {
+                    "uplink": 0,
+                    "downlink": 0,
+                    "timestamp": None
+                }
             }
         
         key_history = history["keys_history"][key_uuid]
         
-        # Обновляем общую статистику
-        current_bytes = current_traffic.get("total_bytes", 0)
-        current_rx = current_traffic.get("rx_bytes", 0)
-        current_tx = current_traffic.get("tx_bytes", 0)
-        current_connections = current_traffic.get("connections", 0)
+        # Инициализируем поля uplink/downlink если их нет (для старых записей)
+        if "uplink" not in key_history["total_traffic"]:
+            key_history["total_traffic"]["uplink"] = 0
+        if "downlink" not in key_history["total_traffic"]:
+            key_history["total_traffic"]["downlink"] = 0
+        if "last_xray_stats" not in key_history:
+            key_history["last_xray_stats"] = {
+                "uplink": 0,
+                "downlink": 0,
+                "timestamp": None
+            }
         
-        # Добавляем только новый трафик (разницу)
-        if "last_traffic" in key_history:
-            last_traffic = key_history["last_traffic"]
-            traffic_delta = max(0, current_bytes - last_traffic.get("total_bytes", 0))
-            rx_delta = max(0, current_rx - last_traffic.get("rx_bytes", 0))
-            tx_delta = max(0, current_tx - last_traffic.get("tx_bytes", 0))
-            
-            key_history["total_traffic"]["total_bytes"] += traffic_delta
-            key_history["total_traffic"]["rx_bytes"] += rx_delta
-            key_history["total_traffic"]["tx_bytes"] += tx_delta
+        # Приоритет: используем Xray Stats API если доступен, иначе fallback
+        if XRAY_STATS_AVAILABLE:
+            try:
+                xray_stats = get_xray_user_traffic(key_uuid)
+                xray_uplink = xray_stats.get("uplink", 0)
+                xray_downlink = xray_stats.get("downlink", 0)
+                
+                # Вычисляем дельту от последних сохраненных данных Xray Stats
+                last_xray = key_history.get("last_xray_stats", {})
+                last_uplink = last_xray.get("uplink", 0)
+                last_downlink = last_xray.get("downlink", 0)
+                
+                # Трафик может сбрасываться при перезапуске Xray, учитываем это
+                if xray_uplink < last_uplink or xray_downlink < last_downlink:
+                    # Xray был перезапущен, считаем что весь новый трафик - это прирост
+                    uplink_delta = xray_uplink
+                    downlink_delta = xray_downlink
+                else:
+                    uplink_delta = max(0, xray_uplink - last_uplink)
+                    downlink_delta = max(0, xray_downlink - last_downlink)
+                
+                # Обновляем общую статистику
+                key_history["total_traffic"]["uplink"] += uplink_delta
+                key_history["total_traffic"]["downlink"] += downlink_delta
+                key_history["total_traffic"]["total_bytes"] += (uplink_delta + downlink_delta)
+                
+                # Сохраняем текущие значения Xray Stats
+                key_history["last_xray_stats"] = {
+                    "uplink": xray_uplink,
+                    "downlink": xray_downlink,
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                # Используем для ежедневной статистики
+                current_bytes = uplink_delta + downlink_delta
+                current_rx = downlink_delta  # downlink = полученные данные
+                current_tx = uplink_delta     # uplink = отправленные данные
+                
+                # Устанавливаем флаг, что обновили через Xray Stats
+                xray_stats_updated = True
+                
+            except Exception as e:
+                xray_stats_updated = False
+                logger.error(f"Error getting Xray Stats for {key_uuid}: {e}")
+                # Fallback на текущие данные если переданы
+                if current_traffic:
+                    current_bytes = current_traffic.get("total_bytes", 0)
+                    current_rx = current_traffic.get("rx_bytes", 0)
+                    current_tx = current_traffic.get("tx_bytes", 0)
+                else:
+                    current_bytes = 0
+                    current_rx = 0
+                    current_tx = 0
         else:
-            # Первое обновление - добавляем весь текущий трафик
-            key_history["total_traffic"]["total_bytes"] += current_bytes
-            key_history["total_traffic"]["rx_bytes"] += current_rx
-            key_history["total_traffic"]["tx_bytes"] += current_tx
+            # Fallback на старый метод
+            if current_traffic:
+                current_bytes = current_traffic.get("total_bytes", 0)
+                current_rx = current_traffic.get("rx_bytes", 0)
+                current_tx = current_traffic.get("tx_bytes", 0)
+            else:
+                current_bytes = 0
+                current_rx = 0
+                current_tx = 0
+        
+        current_connections = current_traffic.get("connections", 0) if current_traffic else 0
+        
+        # Для fallback метода (если не использовали Xray Stats или была ошибка)
+        if not XRAY_STATS_AVAILABLE or not xray_stats_updated:
+            # Добавляем только новый трафик (разницу)
+            if "last_traffic" in key_history:
+                last_traffic = key_history["last_traffic"]
+                traffic_delta = max(0, current_bytes - last_traffic.get("total_bytes", 0))
+                rx_delta = max(0, current_rx - last_traffic.get("rx_bytes", 0))
+                tx_delta = max(0, current_tx - last_traffic.get("tx_bytes", 0))
+                
+                key_history["total_traffic"]["total_bytes"] += traffic_delta
+                key_history["total_traffic"]["rx_bytes"] += rx_delta
+                key_history["total_traffic"]["tx_bytes"] += tx_delta
+            else:
+                # Первое обновление - добавляем весь текущий трафик
+                key_history["total_traffic"]["total_bytes"] += current_bytes
+                key_history["total_traffic"]["rx_bytes"] += current_rx
+                key_history["total_traffic"]["tx_bytes"] += current_tx
         
         # Обновляем максимальное количество соединений
         key_history["total_traffic"]["total_connections"] = max(
@@ -124,7 +213,15 @@ class TrafficHistoryManager:
             }
         
         daily_stats = key_history["daily_traffic"][today]
-        if "last_traffic" in key_history:
+        
+        # Если использовали Xray Stats, дельта уже вычислена выше
+        # Для fallback метода вычисляем дельту для ежедневной статистики
+        if XRAY_STATS_AVAILABLE and key_history.get("last_xray_stats", {}).get("timestamp"):
+            # Используем уже вычисленные дельты (current_bytes, current_rx, current_tx)
+            daily_stats["total_bytes"] += current_bytes
+            daily_stats["rx_bytes"] += current_rx
+            daily_stats["tx_bytes"] += current_tx
+        elif "last_traffic" in key_history:
             last_traffic = key_history["last_traffic"]
             traffic_delta = max(0, current_bytes - last_traffic.get("total_bytes", 0))
             rx_delta = max(0, current_rx - last_traffic.get("rx_bytes", 0))
@@ -199,10 +296,14 @@ class TrafficHistoryManager:
                 "total_bytes": total_traffic["total_bytes"],
                 "rx_bytes": total_traffic["rx_bytes"],
                 "tx_bytes": total_traffic["tx_bytes"],
+                "uplink": total_traffic.get("uplink", 0),
+                "downlink": total_traffic.get("downlink", 0),
                 "total_connections": total_traffic["total_connections"],
                 "total_formatted": self._format_bytes(total_traffic["total_bytes"]),
                 "rx_formatted": self._format_bytes(total_traffic["rx_bytes"]),
-                "tx_formatted": self._format_bytes(total_traffic["tx_bytes"])
+                "tx_formatted": self._format_bytes(total_traffic["tx_bytes"]),
+                "uplink_formatted": self._format_bytes(total_traffic.get("uplink", 0)),
+                "downlink_formatted": self._format_bytes(total_traffic.get("downlink", 0))
             },
             "daily_stats": key_history["daily_traffic"]
         }
