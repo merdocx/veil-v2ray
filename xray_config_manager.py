@@ -128,9 +128,18 @@ class XrayConfigManager:
                     "show": False,
                     "dest": "www.microsoft.com:443",
                     "xver": 0,
-                    "serverNames": ["www.microsoft.com"],
+                    "serverNames": [
+                        "www.microsoft.com",
+                        "www.cloudflare.com",
+                        "www.google.com"
+                    ],
                     "privateKey": reality_keys['private_key'],
-                    "shortIds": [reality_keys['short_id']],
+                    "shortIds": [
+                        "2680beb40ea2fde0",
+                        "2bc4128aa76f2b7a",
+                        "c3fc1008549269da",
+                        "c39576010e746754"
+                    ],
                     "maxTimeDiff": 600
                 }
             },
