@@ -12,6 +12,25 @@ Restart=on-failure
 RestartPreventExitStatus=23
 LimitNPROC=10000
 LimitNOFILE=1000000
+MemoryMax=512M
+CPUQuota=80%
+
+# Security hardening
+ProtectSystem=false
+ProtectHome=no
+ReadWritePaths=/root/vpn-server
+NoNewPrivileges=true
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictSUIDSGID=yes
+RemoveIPC=yes
 
 [Install]
-WantedBy=multi-user.target 
+WantedBy=multi-user.target

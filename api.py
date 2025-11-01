@@ -3,11 +3,28 @@ import uuid
 import subprocess
 import os
 import time
+import logging
 from datetime import datetime
 from typing import List, Optional, Dict
-from fastapi import FastAPI, HTTPException, Header, Depends
+from functools import lru_cache
+from fastapi import FastAPI, HTTPException, Header, Depends, Request
+from starlette.requests import Request
 from pydantic import BaseModel
 import psutil
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('/root/vpn-server/logs/error.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Загрузка переменных окружения из .env файла
 def load_env_file():
@@ -30,6 +47,16 @@ from simple_traffic_monitor import get_simple_uuid_traffic, get_simple_all_ports
 from traffic_history_manager import traffic_history
 
 app = FastAPI(title="VPN Key Management API", version="1.0.0")
+
+# Настройка rate limiting с расширенными правилами
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Кэш для конфигураций (TTL 60 секунд)
+_config_cache = {}
+_config_cache_time = {}
+CACHE_TTL = 60
 
 # Пути к файлам
 CONFIG_FILE = "/root/vpn-server/config/config.json"
@@ -69,26 +96,42 @@ def init_keys_file():
         with open(KEYS_FILE, 'w') as f:
             json.dump([], f)
 
-# Загрузка конфигурации Xray
-def load_config():
+# Загрузка конфигурации Xray с кэшированием
+@lru_cache(maxsize=1)
+def load_config_cached():
+    """Загрузка конфигурации с LRU кэшем"""
     with open(CONFIG_FILE, 'r') as f:
         return json.load(f)
+
+def load_config():
+    """Загрузка конфигурации (с автоматической инвалидацией кэша)"""
+    return load_config_cached()
 
 # Сохранение конфигурации Xray
 def save_config(config):
     with open(CONFIG_FILE, 'w') as f:
         json.dump(config, f, indent=2)
+    # Инвалидируем кэш при сохранении
+    load_config_cached.cache_clear()
 
-# Загрузка ключей
-def load_keys():
+# Загрузка ключей с кэшированием
+@lru_cache(maxsize=1)
+def load_keys_cached():
+    """Загрузка ключей с LRU кэшем"""
     init_keys_file()
     with open(KEYS_FILE, 'r') as f:
         return json.load(f)
+
+def load_keys():
+    """Загрузка ключей (с автоматической инвалидацией кэша)"""
+    return load_keys_cached()
 
 # Сохранение ключей
 def save_keys(keys):
     with open(KEYS_FILE, 'w') as f:
         json.dump(keys, f, indent=2)
+    # Инвалидируем кэш при сохранении
+    load_keys_cached.cache_clear()
 
 # Перезапуск Xray сервиса с проверкой
 def restart_xray():
@@ -221,7 +264,7 @@ async def health_check():
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": "2.1.4",
+            "version": "2.2.0",
             "services": {
                 "xray": xray_status,
                 "api": api_status,
@@ -244,7 +287,8 @@ async def health_check():
         }
 
 @app.post("/api/keys", response_model=VPNKey)
-async def create_key(request: CreateKeyRequest, api_key: str = Depends(verify_api_key)):
+@limiter.limit("5/minute")
+async def create_key(request: CreateKeyRequest, http_request: Request, api_key: str = Depends(verify_api_key)):
     """Создать новый VPN ключ с индивидуальным портом"""
     try:
         # Проверяем лимит ключей (максимум 20)
@@ -302,27 +346,6 @@ async def create_key(request: CreateKeyRequest, api_key: str = Depends(verify_ap
         except Exception as e:
             print(f"Warning: Failed to initialize traffic history for key {key_uuid}: {e}")
         
-        # Инициализируем историю трафика для нового ключа
-        try:
-            traffic_history.update_key_traffic(
-                key_uuid, 
-                request.name, 
-                assigned_port, 
-                {"total_bytes": 0, "rx_bytes": 0, "tx_bytes": 0, "connections": 0}
-            )
-        except Exception as e:
-            print(f"Warning: Failed to initialize traffic history for key {key_uuid}: {e}")
-        # Инициализируем историю трафика для нового ключа
-        try:
-            traffic_history.update_key_traffic(
-                key_uuid, 
-                request.name, 
-                assigned_port, 
-                {"total_bytes": 0, "rx_bytes": 0, "tx_bytes": 0, "connections": 0}
-            )
-        except Exception as e:
-            print(f"Warning: Failed to initialize traffic history for key {key_uuid}: {e}")
-        
         return VPNKey(**new_key)
         
     except HTTPException:
@@ -331,7 +354,8 @@ async def create_key(request: CreateKeyRequest, api_key: str = Depends(verify_ap
         raise HTTPException(status_code=500, detail=f"Failed to create key: {str(e)}")
 
 @app.delete("/api/keys/{key_id}")
-async def delete_key(key_id: str, api_key: str = Depends(verify_api_key)):
+@limiter.limit("10/minute")
+async def delete_key(key_id: str, request: Request, api_key: str = Depends(verify_api_key)):
     """Удалить VPN ключ с освобождением порта"""
     try:
         # Загрузка ключей
@@ -371,7 +395,8 @@ async def delete_key(key_id: str, api_key: str = Depends(verify_api_key)):
         raise HTTPException(status_code=500, detail=f"Failed to delete key: {str(e)}")
 
 @app.get("/api/keys", response_model=List[VPNKey])
-async def list_keys(api_key: str = Depends(verify_api_key)):
+@limiter.limit("30/minute")
+async def list_keys(request: Request, api_key: str = Depends(verify_api_key)):
     """Получить список всех VPN ключей"""
     try:
         keys = load_keys()
@@ -387,7 +412,8 @@ async def list_keys(api_key: str = Depends(verify_api_key)):
         raise HTTPException(status_code=500, detail=f"Failed to load keys: {str(e)}")
 
 @app.get("/api/keys/{key_id}", response_model=VPNKey)
-async def get_key(key_id: str, api_key: str = Depends(verify_api_key)):
+@limiter.limit("60/minute")
+async def get_key(key_id: str, request: Request, api_key: str = Depends(verify_api_key)):
     """Получить информацию о конкретном ключе"""
     try:
         keys = load_keys()
@@ -477,7 +503,8 @@ async def get_traffic_status(api_key: str = Depends(verify_api_key)):
         raise HTTPException(status_code=500, detail=f"Failed to get traffic status: {str(e)}")
 
 @app.post("/api/system/sync-config")
-async def sync_xray_config(api_key: str = Depends(verify_api_key)):
+@limiter.limit("3/minute")
+async def sync_xray_config(request: Request, api_key: str = Depends(verify_api_key)):
     """Принудительная синхронизация конфигурации Xray с keys.json"""
     try:
         # Принудительная синхронизация
