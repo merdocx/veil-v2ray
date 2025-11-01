@@ -288,26 +288,26 @@ async def health_check():
 
 @app.post("/api/keys", response_model=VPNKey)
 @limiter.limit("5/minute")
-async def create_key(request: CreateKeyRequest, http_request: Request, api_key: str = Depends(verify_api_key)):
+async def create_key(request: Request, key_request: CreateKeyRequest, api_key: str = Depends(verify_api_key)):
     """Создать новый VPN ключ с индивидуальным портом"""
     try:
-        # Проверяем лимит ключей (максимум 20)
+        # Проверяем лимит ключей (максимум 100)
         keys = load_keys()
-        if len(keys) >= 20:
-            raise HTTPException(status_code=400, detail="Maximum number of keys (20) reached")
+        if len(keys) >= 100:
+            raise HTTPException(status_code=400, detail="Maximum number of keys (100) reached")
         
         # Генерация UUID для ключа
         key_uuid = str(uuid.uuid4())
         
         # Назначаем порт для ключа
-        assigned_port = assign_port_for_key(key_uuid, str(uuid.uuid4()), request.name)
+        assigned_port = assign_port_for_key(key_uuid, str(uuid.uuid4()), key_request.name)
         if not assigned_port:
             raise HTTPException(status_code=500, detail="No available ports")
         
         # Создание нового ключа
         new_key = {
             "id": str(uuid.uuid4()),
-            "name": request.name,
+            "name": key_request.name,
             "uuid": key_uuid,
             "created_at": datetime.now().isoformat(),
             "is_active": True,
@@ -319,7 +319,7 @@ async def create_key(request: CreateKeyRequest, http_request: Request, api_key: 
         save_keys(keys)
         
         # Добавляем ключ в конфигурацию Xray с индивидуальным портом
-        if not add_key_to_xray_config(key_uuid, request.name):
+        if not add_key_to_xray_config(key_uuid, key_request.name):
             # Откатываем изменения при ошибке
             keys = [k for k in keys if k["uuid"] != key_uuid]
             save_keys(keys)
@@ -339,7 +339,7 @@ async def create_key(request: CreateKeyRequest, http_request: Request, api_key: 
         try:
             traffic_history.update_key_traffic(
                 key_uuid, 
-                request.name, 
+                key_request.name, 
                 assigned_port, 
                 {"total_bytes": 0, "rx_bytes": 0, "tx_bytes": 0, "connections": 0}
             )
@@ -584,8 +584,8 @@ async def get_ports_status(api_key: str = Depends(verify_api_key)):
             "port_assignments": port_assignments,
             "used_ports": used_count,
             "available_ports": available_count,
-            "max_ports": 20,
-            "port_range": "10001-10020",
+            "max_ports": 100,
+            "port_range": "10001-10100",
             "timestamp": int(time.time())
         }
     except Exception as e:

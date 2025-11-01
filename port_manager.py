@@ -14,8 +14,8 @@ class PortManager:
     def __init__(self, ports_file: str = "/root/vpn-server/config/ports.json"):
         self.ports_file = ports_file
         self.port_range_start = 10001
-        self.port_range_end = 10020
-        self.max_ports = self.port_range_end - self.port_range_start + 1  # 20 портов (10001-10020)
+        self.port_range_end = 10100
+        self.max_ports = self.port_range_end - self.port_range_start + 1  # 100 портов (10001-10100)
         
         # Инициализация файла портов
         self._init_ports_file()

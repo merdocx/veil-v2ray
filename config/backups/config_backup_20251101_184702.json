@@ -1,0 +1,276 @@
+{
+  "log": {
+    "loglevel": "error",
+    "access": "",
+    "error": "/root/vpn-server/logs/error.log"
+  },
+  "dns": {
+    "servers": [
+      "https://1.1.1.1/dns-query",
+      "https://1.0.0.1/dns-query",
+      "tls://dns.quad9.net"
+    ]
+  },
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "services": [
+      "StatsService"
+    ]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserUplink": true,
+        "statsUserDownlink": true,
+        "connIdle": 300,
+        "downlinkOnly": 1,
+        "handshake": 4,
+        "uplinkOnly": 1,
+        "bufferSize": 0
+      }
+    },
+    "system": {
+      "statsInboundUplink": false,
+      "statsInboundDownlink": false,
+      "statsOutboundUplink": false,
+      "statsOutboundDownlink": false
+    }
+  },
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": 10003,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "ccc02a98-5708-492a-9780-ff23413b0ed7",
+            "flow": "",
+            "email": "ccc02a98-5708-492a-9780-ff23413b0ed7"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com",
+            "www.cloudflare.com",
+            "www.google.com"
+          ],
+          "privateKey": "INDgW1I7I-ZmXvEg6pnQR15AfuHT4JlxzIouqIJ5kVs",
+          "shortIds": [
+            "2680beb40ea2fde0",
+            "2bc4128aa76f2b7a",
+            "c3fc1008549269da",
+            "c39576010e746754"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-ccc02a98-5708-492a-9780-ff23413b0ed7"
+    },
+    {
+      "listen": "0.0.0.0",
+      "port": 10006,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "dd911e9b-4c66-4cce-8535-ba810e400fec",
+            "flow": "",
+            "email": "dd911e9b-4c66-4cce-8535-ba810e400fec"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com",
+            "www.cloudflare.com",
+            "www.google.com"
+          ],
+          "privateKey": "INDgW1I7I-ZmXvEg6pnQR15AfuHT4JlxzIouqIJ5kVs",
+          "shortIds": [
+            "2680beb40ea2fde0",
+            "2bc4128aa76f2b7a",
+            "c3fc1008549269da",
+            "c39576010e746754"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-dd911e9b-4c66-4cce-8535-ba810e400fec"
+    },
+    {
+      "listen": "0.0.0.0",
+      "port": 10008,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "16973cb3-8721-483d-88e1-a9a18152fed1",
+            "flow": "",
+            "email": "16973cb3-8721-483d-88e1-a9a18152fed1"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com",
+            "www.cloudflare.com",
+            "www.google.com"
+          ],
+          "privateKey": "INDgW1I7I-ZmXvEg6pnQR15AfuHT4JlxzIouqIJ5kVs",
+          "shortIds": [
+            "2680beb40ea2fde0",
+            "2bc4128aa76f2b7a",
+            "c3fc1008549269da",
+            "c39576010e746754"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-16973cb3-8721-483d-88e1-a9a18152fed1"
+    },
+    {
+      "listen": "0.0.0.0",
+      "port": 10004,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "f7c0a889-cb99-4fe5-91ca-9b9ea2d5fc52",
+            "flow": "",
+            "email": "f7c0a889-cb99-4fe5-91ca-9b9ea2d5fc52"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com",
+            "www.cloudflare.com",
+            "www.google.com"
+          ],
+          "privateKey": "INDgW1I7I-ZmXvEg6pnQR15AfuHT4JlxzIouqIJ5kVs",
+          "shortIds": [
+            "2680beb40ea2fde0",
+            "2bc4128aa76f2b7a",
+            "c3fc1008549269da",
+            "c39576010e746754"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-f7c0a889-cb99-4fe5-91ca-9b9ea2d5fc52"
+    },
+    {
+      "listen": "0.0.0.0",
+      "port": 10007,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "ff8b49e0-29e6-421f-940c-996996c35280",
+            "flow": "",
+            "email": "ff8b49e0-29e6-421f-940c-996996c35280"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com",
+            "www.cloudflare.com",
+            "www.google.com"
+          ],
+          "privateKey": "INDgW1I7I-ZmXvEg6pnQR15AfuHT4JlxzIouqIJ5kVs",
+          "shortIds": [
+            "2680beb40ea2fde0",
+            "2bc4128aa76f2b7a",
+            "c3fc1008549269da",
+            "c39576010e746754"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-ff8b49e0-29e6-421f-940c-996996c35280"
+    },
+    {
+      "listen": "0.0.0.0",
+      "port": 10002,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "61eec90f-bc77-41d6-8a9f-a985e40c4157",
+            "flow": "",
+            "email": "61eec90f-bc77-41d6-8a9f-a985e40c4157"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com",
+            "www.cloudflare.com",
+            "www.google.com"
+          ],
+          "privateKey": "INDgW1I7I-ZmXvEg6pnQR15AfuHT4JlxzIouqIJ5kVs",
+          "shortIds": [
+            "2680beb40ea2fde0",
+            "2bc4128aa76f2b7a",
+            "c3fc1008549269da",
+            "c39576010e746754"
+          ],
+          "maxTimeDiff": 600
+        }
+      },
+      "tag": "inbound-61eec90f-bc77-41d6-8a9f-a985e40c4157"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    }
+  ]
+}

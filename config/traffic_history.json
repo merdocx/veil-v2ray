@@ -437,14 +437,14 @@
           "sessions": 14
         }
       },
-      "last_activity": "2025-10-24T13:32:06.035845",
+      "last_activity": "2025-10-24T16:19:10.192314",
       "is_active": false,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
         "connections": 0,
-        "timestamp": "2025-10-24T13:32:06.035818"
+        "timestamp": "2025-10-24T16:19:10.192304"
       }
     },
     "686525cc-19cc-4a11-b6cf-7de3fe7f71db": {
@@ -1786,16 +1786,23 @@
           "tx_bytes": 0,
           "max_connections": 0,
           "sessions": 0
+        },
+        "2025-10-26": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
         }
       },
-      "last_activity": "2025-10-24T13:32:06.069945",
+      "last_activity": "2025-10-26T15:56:36.940071",
       "is_active": false,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
         "connections": 0,
-        "timestamp": "2025-10-24T13:32:06.069935"
+        "timestamp": "2025-10-26T15:56:36.940062"
       }
     },
     "7678ba35-664d-4559-a8d4-89c4181e82e3": {
@@ -1817,14 +1824,14 @@
           "sessions": 0
         }
       },
-      "last_activity": "2025-10-24T13:32:06.081781",
+      "last_activity": "2025-10-24T23:10:52.346219",
       "is_active": false,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
         "connections": 0,
-        "timestamp": "2025-10-24T13:32:06.081769"
+        "timestamp": "2025-10-24T23:10:52.346211"
       }
     },
     "ccc02a98-5708-492a-9780-ff23413b0ed7": {
@@ -1832,10 +1839,10 @@
       "port": 10003,
       "created_at": "2025-10-24T13:31:33.106011",
       "total_traffic": {
-        "total_bytes": 0,
-        "rx_bytes": 0,
-        "tx_bytes": 0,
-        "total_connections": 0
+        "total_bytes": 47330702844.28931,
+        "rx_bytes": 23665351421.0,
+        "tx_bytes": 23665351421.0,
+        "total_connections": 331
       },
       "daily_traffic": {
         "2025-10-24": {
@@ -1844,16 +1851,44 @@
           "tx_bytes": 0,
           "max_connections": 0,
           "sessions": 0
+        },
+        "2025-10-26": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-27": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-30": {
+          "total_bytes": 47095418254.91528,
+          "rx_bytes": 23547709127.0,
+          "tx_bytes": 23547709127.0,
+          "max_connections": 147,
+          "sessions": 1
+        },
+        "2025-11-01": {
+          "total_bytes": 235284589.37402344,
+          "rx_bytes": 117642294.0,
+          "tx_bytes": 117642294.0,
+          "max_connections": 331,
+          "sessions": 12
         }
       },
-      "last_activity": "2025-10-24T13:32:06.091559",
-      "is_active": false,
+      "last_activity": "2025-11-01T19:01:41.666751",
+      "is_active": true,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
-        "connections": 0,
-        "timestamp": "2025-10-24T13:32:06.091549"
+        "connections": 7,
+        "timestamp": "2025-11-01T19:01:41.666740"
       }
     },
     "dd911e9b-4c66-4cce-8535-ba810e400fec": {
@@ -1861,10 +1896,10 @@
       "port": 10006,
       "created_at": "2025-10-24T13:42:48.543290",
       "total_traffic": {
-        "total_bytes": 0,
-        "rx_bytes": 0,
-        "tx_bytes": 0,
-        "total_connections": 0
+        "total_bytes": 228,
+        "rx_bytes": 114,
+        "tx_bytes": 114,
+        "total_connections": 471
       },
       "daily_traffic": {
         "2025-10-24": {
@@ -1873,16 +1908,570 @@
           "tx_bytes": 0,
           "max_connections": 0,
           "sessions": 0
+        },
+        "2025-10-26": {
+          "total_bytes": 206,
+          "rx_bytes": 103,
+          "tx_bytes": 103,
+          "max_connections": 471,
+          "sessions": 8
+        },
+        "2025-10-27": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 471,
+          "sessions": 1
+        },
+        "2025-10-30": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 471,
+          "sessions": 1
+        },
+        "2025-11-01": {
+          "total_bytes": 22,
+          "rx_bytes": 11,
+          "tx_bytes": 11,
+          "max_connections": 471,
+          "sessions": 19
         }
       },
-      "last_activity": "2025-10-24T13:42:48.554982",
+      "last_activity": "2025-11-01T19:01:41.675306",
       "is_active": false,
       "last_traffic": {
         "total_bytes": 0,
         "rx_bytes": 0,
         "tx_bytes": 0,
         "connections": 0,
-        "timestamp": "2025-10-24T13:42:48.554975"
+        "timestamp": "2025-11-01T19:01:41.675295"
+      }
+    },
+    "16973cb3-8721-483d-88e1-a9a18152fed1": {
+      "key_name": "pavelabashin@gmail.com",
+      "port": 10008,
+      "created_at": "2025-10-24T14:51:44.593026",
+      "total_traffic": {
+        "total_bytes": 2466.778564453125,
+        "rx_bytes": 1233.0,
+        "tx_bytes": 1233.0,
+        "total_connections": 65
+      },
+      "daily_traffic": {
+        "2025-10-24": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-26": {
+          "total_bytes": 2466.778564453125,
+          "rx_bytes": 1233.0,
+          "tx_bytes": 1233.0,
+          "max_connections": 65,
+          "sessions": 8
+        },
+        "2025-10-27": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 65,
+          "sessions": 1
+        },
+        "2025-10-30": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 65,
+          "sessions": 1
+        },
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 65,
+          "sessions": 19
+        }
+      },
+      "last_activity": "2025-11-01T19:01:41.682415",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 3,
+        "timestamp": "2025-11-01T19:01:41.682405"
+      }
+    },
+    "f7c0a889-cb99-4fe5-91ca-9b9ea2d5fc52": {
+      "key_name": "free@ya.ru",
+      "port": 10004,
+      "created_at": "2025-10-24T15:17:57.412332",
+      "total_traffic": {
+        "total_bytes": 66,
+        "rx_bytes": 33,
+        "tx_bytes": 33,
+        "total_connections": 83
+      },
+      "daily_traffic": {
+        "2025-10-24": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-26": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-27": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-10-30": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        },
+        "2025-11-01": {
+          "total_bytes": 66,
+          "rx_bytes": 33,
+          "tx_bytes": 33,
+          "max_connections": 83,
+          "sessions": 1
+        }
+      },
+      "last_activity": "2025-11-01T19:01:41.691274",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T19:01:41.691263"
+      }
+    },
+    "ff8b49e0-29e6-421f-940c-996996c35280": {
+      "key_name": "Mitinmen@mail.ru",
+      "port": 10007,
+      "created_at": "2025-10-24T16:23:56.566637",
+      "total_traffic": {
+        "total_bytes": 3247.21875,
+        "rx_bytes": 1623.0,
+        "tx_bytes": 1623.0,
+        "total_connections": 87
+      },
+      "daily_traffic": {
+        "2025-10-24": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 7,
+          "sessions": 9
+        },
+        "2025-10-26": {
+          "total_bytes": 2779.21875,
+          "rx_bytes": 1389.0,
+          "tx_bytes": 1389.0,
+          "max_connections": 66,
+          "sessions": 9
+        },
+        "2025-10-27": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 66,
+          "sessions": 1
+        },
+        "2025-10-30": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 66,
+          "sessions": 1
+        },
+        "2025-11-01": {
+          "total_bytes": 468,
+          "rx_bytes": 234,
+          "tx_bytes": 234,
+          "max_connections": 87,
+          "sessions": 21
+        }
+      },
+      "last_activity": "2025-11-01T19:01:41.699743",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 468,
+        "rx_bytes": 234,
+        "tx_bytes": 234,
+        "connections": 87,
+        "timestamp": "2025-11-01T19:01:41.699732"
+      }
+    },
+    "85264fdd-8474-41ff-8afb-3135d75acf4e": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-10-26T16:03:44.743187",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 264
+      },
+      "daily_traffic": {
+        "2025-10-26": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 264,
+          "sessions": 6
+        },
+        "2025-10-27": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 264,
+          "sessions": 1
+        }
+      },
+      "last_activity": "2025-10-27T00:04:54.400259",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 264,
+        "timestamp": "2025-10-27T00:04:54.400249"
+      }
+    },
+    "b4f9bd7a-6189-4bd8-b55e-216d0994f1a5": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-10-29T20:30:18.018481",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-10-29": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-10-29T20:30:18.018559",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-10-29T20:30:18.018555"
+      }
+    },
+    "b0987059-aa54-4993-bfd2-9046916bec23": {
+      "key_name": "test_key_1762017825",
+      "port": 10001,
+      "created_at": "2025-11-01T17:23:47.883932",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-11-01T17:23:47.884014",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T17:23:47.884011"
+      }
+    },
+    "92aef76c-e806-4321-bbdf-4cd706a5082d": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-11-01T17:26:40.149273",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-11-01T17:26:40.149323",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T17:26:40.149319"
+      }
+    },
+    "25e89b85-ecbf-4ddc-adb5-82b48909fb8c": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10002,
+      "created_at": "2025-11-01T17:27:19.582199",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-11-01T17:27:19.582247",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T17:27:19.582245"
+      }
+    },
+    "7cba33c3-db27-46b0-8d40-9b6a4da86657": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-11-01T18:22:19.500373",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-11-01T18:22:19.500426",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T18:22:19.500423"
+      }
+    },
+    "9aaf5059-3406-4f85-b3fd-0af978b5a2e4": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10002,
+      "created_at": "2025-11-01T18:24:36.028349",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-11-01T18:24:36.028409",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T18:24:36.028406"
+      }
+    },
+    "2ce6f1c4-5068-40a4-bdfe-6e6ae11f57e3": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-11-01T18:27:43.586810",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 38
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 38,
+          "sessions": 1
+        }
+      },
+      "last_activity": "2025-11-01T18:28:50.494933",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 38,
+        "timestamp": "2025-11-01T18:28:50.494921"
+      }
+    },
+    "61eec90f-bc77-41d6-8a9f-a985e40c4157": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10002,
+      "created_at": "2025-11-01T18:36:55.544230",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-11-01T18:36:55.544411",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T18:36:55.544408"
+      }
+    },
+    "80a80f6f-00f0-4baf-97c7-4f08f8bee426": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-11-01T18:47:04.237115",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-11-01T18:47:04.237167",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T18:47:04.237165"
+      }
+    },
+    "cf3b7d65-4835-4a01-b1bc-7cc08e5a38ae": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10002,
+      "created_at": "2025-11-01T18:47:23.270509",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 0
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 0,
+          "sessions": 0
+        }
+      },
+      "last_activity": "2025-11-01T18:47:23.270569",
+      "is_active": false,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 0,
+        "timestamp": "2025-11-01T18:47:23.270566"
+      }
+    },
+    "30f86d7a-4135-4c95-9fa3-88ba14fe06c8": {
+      "key_name": "nvipetrenko@gmail.com",
+      "port": 10001,
+      "created_at": "2025-11-01T18:52:07.546226",
+      "total_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "total_connections": 12
+      },
+      "daily_traffic": {
+        "2025-11-01": {
+          "total_bytes": 0,
+          "rx_bytes": 0,
+          "tx_bytes": 0,
+          "max_connections": 12,
+          "sessions": 1
+        }
+      },
+      "last_activity": "2025-11-01T19:01:41.707495",
+      "is_active": true,
+      "last_traffic": {
+        "total_bytes": 0,
+        "rx_bytes": 0,
+        "tx_bytes": 0,
+        "connections": 12,
+        "timestamp": "2025-11-01T19:01:41.707485"
       }
     }
   },
@@ -2023,8 +2612,38 @@
       "total_bytes": 980954585.5974121,
       "total_connections": 667,
       "active_keys": 0,
-      "total_sessions": 53
+      "total_sessions": 62
+    },
+    "2025-10-26": {
+      "total_bytes": 43615.978515625,
+      "total_connections": 471,
+      "active_keys": 0,
+      "total_sessions": 31
+    },
+    "2025-10-27": {
+      "total_bytes": 5451.997314453125,
+      "total_connections": 471,
+      "active_keys": 0,
+      "total_sessions": 4
+    },
+    "2025-10-29": {
+      "total_bytes": 0,
+      "total_connections": 0,
+      "active_keys": 0,
+      "total_sessions": 0
+    },
+    "2025-10-30": {
+      "total_bytes": 47095423706.9126,
+      "total_connections": 471,
+      "active_keys": 0,
+      "total_sessions": 4
+    },
+    "2025-11-01": {
+      "total_bytes": 17607829659.656982,
+      "total_connections": 471,
+      "active_keys": 0,
+      "total_sessions": 74
     }
   },
-  "last_update": "2025-10-24T13:42:48.554986"
+  "last_update": "2025-11-01T19:01:41.707502"
 }

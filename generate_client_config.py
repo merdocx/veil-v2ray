@@ -2,6 +2,7 @@
 import json
 import sys
 import os
+import random
 
 def generate_client_config(key_uuid, key_name, port=None):
     """Генерация конфигурации клиента для VLESS+Reality"""
@@ -33,8 +34,10 @@ def generate_client_config(key_uuid, key_name, port=None):
     # Извлечение параметров Reality из найденного inbound
     reality_settings = vless_inbound['streamSettings']['realitySettings']
     private_key = reality_settings['privateKey']
-    short_id = reality_settings['shortIds'][0]
+    # Случайный выбор shortId и SNI для разнообразия (обратная совместимость сохранена)
+    short_id = random.choice(reality_settings['shortIds'])
     server_names = reality_settings['serverNames']
+    sni = random.choice(server_names)
     
     # Загрузка публичного ключа из keys.env
     public_key = None
@@ -58,8 +61,8 @@ def generate_client_config(key_uuid, key_name, port=None):
     if not port:
         port = vless_inbound['port']
     
-    # Генерация VLESS URL
-    vless_url = f"vless://{key_uuid}@{server_ip}:{port}?type=tcp&security=reality&sni={server_names[0]}&pbk={public_key}&sid={short_id}&fp=chrome#{key_name}"
+    # Генерация VLESS URL с случайно выбранными параметрами
+    vless_url = f"vless://{key_uuid}@{server_ip}:{port}?type=tcp&security=reality&sni={sni}&pbk={public_key}&sid={short_id}&fp=chrome#{key_name}"
     
     return vless_url
 

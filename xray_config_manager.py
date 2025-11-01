@@ -131,7 +131,10 @@ class XrayConfigManager:
                     "serverNames": [
                         "www.microsoft.com",
                         "www.cloudflare.com",
-                        "www.google.com"
+                        "www.google.com",
+                        "www.github.com",
+                        "www.apple.com",
+                        "www.amazon.com"
                     ],
                     "privateKey": reality_keys['private_key'],
                     "shortIds": [
