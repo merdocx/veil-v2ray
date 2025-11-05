@@ -76,6 +76,61 @@ class XrayConfigManager:
             print(f"Error creating backup: {e}")
             return ""
     
+    def _update_routing_rules(self, config: Dict) -> None:
+        """Обновление правил маршрутизации на основе всех активных inbounds"""
+        try:
+            # Инициализируем routing, если его нет
+            if "routing" not in config:
+                config["routing"] = {
+                    "domainStrategy": "AsIs",
+                    "rules": []
+                }
+            
+            # Получаем все теги активных vless inbounds (кроме API)
+            vless_inbound_tags = []
+            for inbound in config.get("inbounds", []):
+                if (inbound.get("protocol") == "vless" and 
+                    inbound.get("tag") != "api" and
+                    inbound.get("tag")):
+                    vless_inbound_tags.append(inbound.get("tag"))
+            
+            # Находим или создаем правило для direct маршрутизации
+            routing_rules = config["routing"].get("rules", [])
+            direct_rule = None
+            for rule in routing_rules:
+                if rule.get("outboundTag") == "direct":
+                    direct_rule = rule
+                    break
+            
+            if direct_rule:
+                # Обновляем существующее правило
+                direct_rule["inboundTag"] = vless_inbound_tags
+            else:
+                # Создаем новое правило, если его нет
+                if vless_inbound_tags:
+                    routing_rules.append({
+                        "type": "field",
+                        "inboundTag": vless_inbound_tags,
+                        "outboundTag": "direct"
+                    })
+            
+            # Убеждаемся, что правило для API есть
+            api_rule_exists = any(
+                rule.get("outboundTag") == "api" 
+                for rule in routing_rules
+            )
+            if not api_rule_exists:
+                routing_rules.insert(0, {
+                    "type": "field",
+                    "inboundTag": ["api"],
+                    "outboundTag": "api"
+                })
+            
+            config["routing"]["rules"] = routing_rules
+            
+        except Exception as e:
+            print(f"Error updating routing rules: {e}")
+    
     def _validate_config(self, config: Dict) -> bool:
         """Валидация конфигурации Xray"""
         try:
@@ -181,6 +236,9 @@ class XrayConfigManager:
             # Добавляем inbound в конфигурацию
             config["inbounds"].append(inbound)
             
+            # Обновляем правила маршрутизации
+            self._update_routing_rules(config)
+            
             # Валидируем конфигурацию
             if not self._validate_config(config):
                 print("Configuration validation failed")
@@ -212,6 +270,9 @@ class XrayConfigManager:
                 inbound for inbound in config["inbounds"]
                 if inbound.get("tag") != f"inbound-{uuid}"
             ]
+            
+            # Обновляем правила маршрутизации
+            self._update_routing_rules(config)
             
             # Валидируем конфигурацию
             if not self._validate_config(config):
@@ -248,6 +309,9 @@ class XrayConfigManager:
                     inbound = self.create_inbound_for_key(key["uuid"], key["name"])
                     if inbound:
                         config["inbounds"].append(inbound)
+            
+            # Обновляем правила маршрутизации
+            self._update_routing_rules(config)
             
             # Валидируем конфигурацию
             if not self._validate_config(config):
