@@ -1,14 +1,14 @@
 # VPN Key Management API - Документация
 
-## Версия API: 2.1.3
+## Версия API: 2.2.0
 
 ### Обзор
 API для управления VPN ключами с поддержкой VLESS+Reality протокола, индивидуальных портов и мониторинга трафика.
 
 ### Базовый URL
-```
-https://your-server:8000
-```
+- API доступен по адресу сервера: `https://<IP_ИЛИ_ДОМЕН>:8000`
+- Домен необязателен. Можно обращаться напрямую к публичному IP (пример: `https://203.0.113.10:8000`). Замените на адрес своего сервера.
+- Если используете self-signed сертификат, добавьте флаг `-k/--insecure` в `curl` или установите доверенный сертификат.
 
 ### Аутентификация
 Все запросы требуют API ключ в заголовке `X-API-Key`.
@@ -43,7 +43,7 @@ https://your-server:8000
 
 **Пример:**
 ```bash
-curl -X POST "https://localhost:8000/api/keys" \
+curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
      -H "X-API-Key: your-api-key" \
      -H "Content-Type: application/json" \
      -d '{"name": "user@example.com"}'
@@ -89,8 +89,8 @@ curl -X POST "https://localhost:8000/api/keys" \
         "is_active": true,
         "port": 10001
     },
-    "vless_url": "vless://uuid@server:port?security=reality&sni=example.com&fp=chrome&pbk=public-key&sid=session-id&type=tcp&flow=xtls-rprx-vision#user@example.com",
-    "qr_code_data": "vless://uuid@server:port?security=reality&sni=example.com&fp=chrome&pbk=public-key&sid=session-id&type=tcp&flow=xtls-rprx-vision#user@example.com"
+    "vless_url": "vless://uuid@SERVER_ADDRESS:PORT?security=reality&sni=example.com&fp=chrome&pbk=public-key&sid=session-id&type=tcp&flow=xtls-rprx-vision#user@example.com",
+    "qr_code_data": "vless://uuid@SERVER_ADDRESS:PORT?security=reality&sni=example.com&fp=chrome&pbk=public-key&sid=session-id&type=tcp&flow=xtls-rprx-vision#user@example.com"
 }
 ```
 
@@ -362,10 +362,10 @@ curl -X POST "https://localhost:8000/api/keys" \
 **Примеры использования:**
 ```bash
 # Текущий месяц
-curl -H "X-API-Key: your-api-key" https://localhost:8000/api/traffic/monthly
+curl -H "X-API-Key: your-api-key" https://SERVER_ADDRESS:8000/api/traffic/monthly
 
 # Указанный месяц
-curl -H "X-API-Key: your-api-key" https://localhost:8000/api/traffic/monthly?year_month=2025-08
+curl -H "X-API-Key: your-api-key" "https://SERVER_ADDRESS:8000/api/traffic/monthly?year_month=2025-08"
 ```
 
 ### Месячная статистика ключа
@@ -415,10 +415,10 @@ curl -H "X-API-Key: your-api-key" https://localhost:8000/api/traffic/monthly?yea
 **Примеры использования:**
 ```bash
 # Текущий месяц для ключа
-curl -H "X-API-Key: your-api-key" https://localhost:8000/api/keys/key-id/traffic/monthly
+curl -H "X-API-Key: your-api-key" https://SERVER_ADDRESS:8000/api/keys/key-id/traffic/monthly
 
 # Указанный месяц для ключа
-curl -H "X-API-Key: your-api-key" https://localhost:8000/api/keys/key-id/traffic/monthly?year_month=2025-08
+curl -H "X-API-Key: your-api-key" "https://SERVER_ADDRESS:8000/api/keys/key-id/traffic/monthly?year_month=2025-08"
 ```
 
 ---
@@ -497,19 +497,19 @@ curl -H "X-API-Key: your-api-key" https://localhost:8000/api/keys/key-id/traffic
 ### Получение общего объема трафика с момента создания ключей
 ```bash
 curl -H "X-API-Key: your-api-key" \
-     https://localhost:8000/api/traffic/history
+    https://SERVER_ADDRESS:8000/api/traffic/history
 ```
 
 ### Получение истории трафика конкретного ключа
 ```bash
 curl -H "X-API-Key: your-api-key" \
-     https://localhost:8000/api/keys/key-id/traffic/history
+    https://SERVER_ADDRESS:8000/api/keys/key-id/traffic/history
 ```
 
 ### Получение ежедневной статистики
 ```bash
 curl -H "X-API-Key: your-api-key" \
-     https://localhost:8000/api/traffic/daily/2025-08-05
+    https://SERVER_ADDRESS:8000/api/traffic/daily/2025-08-05
 ```
 
 ---

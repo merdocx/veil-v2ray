@@ -32,9 +32,11 @@
 
 ## Примеры запросов
 
+> Базовый адрес API: `https://<IP_ИЛИ_ДОМЕН>:8000`. Домен необязателен — можно использовать публичный IP сервера. При self-signed сертификате добавляйте `-k` в `curl`.
+
 ### Создание ключа
 ```bash
-curl -X POST "https://veil-bird.ru/api/keys" \
+curl -k -X POST "https://SERVER_ADDRESS:8000/api/keys" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name": "user@example.com"}'
@@ -42,19 +44,19 @@ curl -X POST "https://veil-bird.ru/api/keys" \
 
 ### Получение списка ключей
 ```bash
-curl -X GET "https://veil-bird.ru/api/keys" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ### Получение конфигурации ключа
 ```bash
-curl -X GET "https://veil-bird.ru/api/keys/{key_id}/config" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/config" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ### Удаление ключа
 ```bash
-curl -X DELETE "https://veil-bird.ru/api/keys/{key_id}" \
+curl -k -X DELETE "https://SERVER_ADDRESS:8000/api/keys/{key_id}" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -62,19 +64,19 @@ curl -X DELETE "https://veil-bird.ru/api/keys/{key_id}" \
 
 #### Простой мониторинг всех ключей
 ```bash
-curl -X GET "https://veil-bird.ru/api/traffic/simple" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/simple" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Простой мониторинг конкретного ключа
 ```bash
-curl -X GET "https://veil-bird.ru/api/keys/{key_id}/traffic/simple" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/simple" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Сброс статистики ключа
 ```bash
-curl -X POST "https://veil-bird.ru/api/keys/{key_id}/traffic/simple/reset" \
+curl -k -X POST "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/simple/reset" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -82,31 +84,31 @@ curl -X POST "https://veil-bird.ru/api/keys/{key_id}/traffic/simple/reset" \
 
 #### Статус портов
 ```bash
-curl -X GET "https://veil-bird.ru/api/system/ports" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/ports" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Сброс портов
 ```bash
-curl -X POST "https://veil-bird.ru/api/system/ports/reset" \
+curl -k -X POST "https://SERVER_ADDRESS:8000/api/system/ports/reset" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Сводка трафика
 ```bash
-curl -X GET "https://veil-bird.ru/api/system/traffic/summary" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/traffic/summary" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Статус конфигурации Xray
 ```bash
-curl -X GET "https://veil-bird.ru/api/system/xray/config-status" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/xray/config-status" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Синхронизация конфигурации
 ```bash
-curl -X POST "https://veil-bird.ru/api/system/xray/sync-config" \
+curl -k -X POST "https://SERVER_ADDRESS:8000/api/system/xray/sync-config" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -114,19 +116,19 @@ curl -X POST "https://veil-bird.ru/api/system/xray/sync-config" \
 
 #### Общая история трафика
 ```bash
-curl -X GET "https://veil-bird.ru/api/traffic/history" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/history" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### История трафика ключа
 ```bash
-curl -X GET "https://veil-bird.ru/api/keys/{key_id}/traffic/history" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/history" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Ежедневная статистика
 ```bash
-curl -X GET "https://veil-bird.ru/api/traffic/daily/2025-08-05" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/daily/2025-08-05" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -134,25 +136,25 @@ curl -X GET "https://veil-bird.ru/api/traffic/daily/2025-08-05" \
 
 #### Месячная статистика всех ключей
 ```bash
-curl -X GET "https://veil-bird.ru/api/traffic/monthly" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/monthly" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Месячная статистика с указанием месяца
 ```bash
-curl -X GET "https://veil-bird.ru/api/traffic/monthly?year_month=2025-08" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/monthly?year_month=2025-08" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Месячная статистика ключа
 ```bash
-curl -X GET "https://veil-bird.ru/api/keys/{key_id}/traffic/monthly" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/monthly" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 #### Месячная статистика ключа с указанием месяца
 ```bash
-curl -X GET "https://veil-bird.ru/api/keys/{key_id}/traffic/monthly?year_month=2025-08" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/monthly?year_month=2025-08" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
   -H "X-API-Key: YOUR_API_KEY"
