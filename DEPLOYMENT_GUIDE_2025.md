@@ -141,10 +141,10 @@ git clone <your-repository-url> /root/vpn-server
 ├── requirements.txt            # Python зависимости
 ├── .env                       # Переменные окружения
 ├── config/
-│   ├── config.json            # Конфигурация Xray
-│   ├── keys.json              # База ключей
-│   ├── ports.json             # Назначения портов
-│   └── traffic_history.json   # Исторические данные трафика
+│   ├── config.template.json          # Шаблон конфигурации Xray
+│   ├── keys.template.json            # Пустая база ключей
+│   ├── ports.template.json           # Шаблон назначений портов
+│   └── traffic_history.template.json # Заготовка истории трафика
 └── logs/                      # Логи приложения
 ```
 
@@ -197,23 +197,30 @@ sudo chmod 644 /etc/ssl/certs/vpn-api.crt
 ```
 
 ### **5.3 Конфигурация Xray**
-- Базовый файл `config/config.json` поставляется вместе с проектом и содержит набор inbound’ов, портов и Reality-настроек.  
-- При переносе сервера скопируйте актуальные файлы `config/*.json` с работающей инсталляции или отредактируйте шаблон под свои ключи.
-- Для новых развёртываний:
-  1. Скопируйте `config/config.json` из репозитория.
-  2. Сгенерируйте новые Reality `privateKey` и `shortIds` (см. шаг 6) и пропишите их для каждого inbound.
-  3. Обновите список клиентов (`clients`/`email`/`id`) в соответствии с планом доступа.
+- В репозитории лежат обезличенные шаблоны:
+  - `config/config.template.json`
+  - `config/keys.template.json`
+  - `config/ports.template.json`
+  - `config/traffic_history.template.json`
+  - `config/keys.example.env`
+- Для нового сервера скопируйте шаблоны в рабочие файлы:
+  ```bash
+  cp config/config.template.json config/config.json
+  cp config/keys.template.json config/keys.json
+  cp config/ports.template.json config/ports.json
+  cp config/traffic_history.template.json config/traffic_history.json
+  cp config/keys.example.env config/keys.env
+  ```
+- Рабочие файлы (`config.json`, `keys.json`, `ports.json`, `traffic_history.json`, `keys.env`) добавлены в `.gitignore` и не должны попадать в репозиторий.
+- Отредактируйте `config/config.json`, если требуется поменять DNS или поведение API.
+- Файл `config/keys.json` может остаться пустым (`[]`) — ключи будут добавляться через REST API.
+- `config/keys.env` должен содержать Reality ключи (см. Шаг 6) и используется HandlerService для выдачи inbound’ов без перезапуска.
 
 ### **5.4 Инициализация файлов данных**
-```bash
-# Создание пустых файлов данных
-echo '[]' > /root/vpn-server/config/keys.json
-echo '{"used_ports": {}, "port_assignments": {}, "created_at": "'$(date -Iseconds)'", "last_updated": "'$(date -Iseconds)'"}' > /root/vpn-server/config/ports.json
-echo '{"keys": {}, "daily_stats": {}, "monthly_stats": {}}' > /root/vpn-server/config/traffic_history.json
-
-# Создание директории для логов
-mkdir -p /root/vpn-server/logs
-```
+- После копирования шаблонов дополнительно создайте директорию для логов:
+  ```bash
+  mkdir -p /root/vpn-server/logs
+  ```
 
 ---
 
@@ -240,9 +247,10 @@ echo "Private key: $PRIVATE_KEY"
 
 ### **6.2 Обновление конфигурации Xray**
 ```bash
-# Обновление конфигурации с реальными ключами
-sed -i "s/your-private-key-here/$PRIVATE_KEY/g" /root/vpn-server/config/config.json
-sed -i "s/your-short-id-here/$SHORT_ID/g" /root/vpn-server/config/config.json
+# Обновление Reality-ключей для HandlerService
+sed -i "s/YOUR_PRIVATE_KEY_HERE/$PRIVATE_KEY/" /root/vpn-server/config/keys.env
+sed -i "s/YOUR_PUBLIC_KEY_HERE/$(cat reality_public.txt | grep \"Public key:\" | cut -d' ' -f3)/" /root/vpn-server/config/keys.env
+sed -i "s/YOUR_SHORT_ID_HERE/$SHORT_ID/" /root/vpn-server/config/keys.env
 
 # Удаление временных файлов
 rm -f reality_keys.txt reality_public.txt

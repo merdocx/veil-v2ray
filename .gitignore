@@ -2,6 +2,8 @@
 config/keys.env
 config/keys.json
 config/config.json
+config/ports.json
+config/traffic_history.json
 .env
 
 # Логи
