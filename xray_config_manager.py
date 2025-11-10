@@ -8,6 +8,8 @@ import os
 import subprocess
 import secrets
 import string
+import shutil
+import tempfile
 from typing import Dict, List, Optional
 from datetime import datetime
 
@@ -18,6 +20,8 @@ class XrayConfigManager:
         self.config_file = config_file
         self.backup_dir = "/root/vpn-server/config/backups"
         self.keys_env_file = "/root/vpn-server/config/keys.env"
+        self.xray_api_server = os.getenv("XRAY_API_SERVER", "127.0.0.1:10808")
+        self.xray_binary = os.getenv("XRAY_BINARY_PATH", "/usr/local/bin/xray")
         
         # Создаем директорию для бэкапов
         os.makedirs(self.backup_dir, exist_ok=True)
@@ -61,6 +65,75 @@ class XrayConfigManager:
         except Exception as e:
             print(f"Error saving config: {e}")
             return False
+    
+    def _restore_backup(self, backup_file: str):
+        """Восстановление конфигурации из резервной копии"""
+        if not backup_file or not os.path.exists(backup_file):
+            return
+        try:
+            shutil.copy2(backup_file, self.config_file)
+            print(f"Configuration restored from backup {backup_file}")
+        except Exception as e:
+            print(f"Error restoring backup {backup_file}: {e}")
+
+    def _call_xray_api(self, command: str, extra_args: List[str]) -> bool:
+        """Вызов команды xray api"""
+        if not self.xray_api_server:
+            return False
+        if not os.path.exists(self.xray_binary):
+            print(f"Xray binary not found at {self.xray_binary}")
+            return False
+        try:
+            cmd = [
+                self.xray_binary,
+                "api",
+                command,
+                f"--server={self.xray_api_server}",
+                "-t",
+                "5",
+            ]
+            cmd.extend(extra_args)
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode != 0:
+                stderr = (result.stderr or "").strip()
+                stdout = (result.stdout or "").strip()
+                print(f"Xray API command {command} failed: {stderr or stdout}")
+                return False
+            return True
+        except FileNotFoundError:
+            print("Xray binary not found for API calls")
+        except subprocess.TimeoutExpired:
+            print(f"Xray API command {command} timed out")
+        except Exception as e:
+            print(f"Error calling Xray API {command}: {e}")
+        return False
+
+    def _apply_inbound_via_api(self, inbound: Dict) -> bool:
+        """Применение inbound через Xray API без перезапуска"""
+        if not inbound:
+            return False
+        tag = inbound.get("tag")
+        if tag:
+            self._call_xray_api("rmi", [tag])
+        try:
+            with tempfile.NamedTemporaryFile("w", delete=False, suffix=".json") as tmp:
+                json.dump({"inbounds": [inbound]}, tmp, ensure_ascii=False)
+                tmp_path = tmp.name
+            return self._call_xray_api("adi", [tmp_path])
+        finally:
+            if 'tmp_path' in locals() and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+    def _remove_inbound_via_api(self, tag: str) -> bool:
+        """Удаление inbound через Xray API"""
+        if not tag:
+            return False
+        return self._call_xray_api("rmi", [tag])
     
     def _backup_config(self) -> str:
         """Создание резервной копии конфигурации"""
@@ -147,7 +220,7 @@ class XrayConfigManager:
             print(f"Config validation error: {e}")
             return False
     
-    def create_inbound_for_key(self, uuid: str, key_name: str) -> Optional[Dict]:
+    def create_inbound_for_key(self, uuid: str, key_name: str, short_id: Optional[str] = None) -> Optional[Dict]:
         """Создание inbound для ключа с централизованными Reality ключами"""
         # Получаем порт для ключа
         port = port_manager.get_port_for_uuid(uuid)
@@ -157,9 +230,22 @@ class XrayConfigManager:
         
         # Загружаем централизованные Reality ключи
         reality_keys = self._load_reality_keys()
-        if not reality_keys.get('private_key') or not reality_keys.get('short_id'):
+        if not reality_keys.get('private_key'):
             print("Error: Centralized Reality keys not found")
             return None
+
+        # Определяем набор shortIds
+        if short_id:
+            short_ids = [short_id]
+        elif reality_keys.get('short_id'):
+            short_ids = [reality_keys['short_id']]
+        else:
+            short_ids = [
+                "2680beb40ea2fde0",
+                "2bc4128aa76f2b7a",
+                "c3fc1008549269da",
+                "c39576010e746754"
+            ]
         
         # Создаем inbound конфигурацию с централизованными ключами
         inbound = {
@@ -192,12 +278,7 @@ class XrayConfigManager:
                         "www.amazon.com"
                     ],
                     "privateKey": reality_keys['private_key'],
-                    "shortIds": [
-                        "2680beb40ea2fde0",
-                        "2bc4128aa76f2b7a",
-                        "c3fc1008549269da",
-                        "c39576010e746754"
-                    ],
+                    "shortIds": short_ids,
                     "maxTimeDiff": 600
                 }
             },
@@ -206,7 +287,7 @@ class XrayConfigManager:
         
         return inbound
     
-    def add_key_to_config(self, uuid: str, key_name: str) -> bool:
+    def add_key_to_config(self, uuid: str, key_name: str, short_id: Optional[str] = None) -> bool:
         """Добавление ключа в конфигурацию Xray с проверкой Reality ключей"""
         try:
             # Создаем резервную копию
@@ -218,7 +299,7 @@ class XrayConfigManager:
                 return False
             
             # Создаем inbound для ключа
-            inbound = self.create_inbound_for_key(uuid, key_name)
+            inbound = self.create_inbound_for_key(uuid, key_name, short_id)
             if not inbound:
                 print(f"Failed to create inbound for key {uuid}")
                 return False
@@ -247,8 +328,14 @@ class XrayConfigManager:
             # Сохраняем конфигурацию
             success = self._save_config(config)
             if success:
-                print(f"Successfully added key {uuid} to Xray config with centralized Reality keys")
-            return success
+                if self._apply_inbound_via_api(inbound):
+                    print(f"Successfully added key {uuid} to Xray config with centralized Reality keys")
+                    return True
+                else:
+                    print(f"Failed to apply inbound for key {uuid} via Xray API, restoring backup")
+                    self._restore_backup(backup_file)
+                    return False
+            return False
             
         except Exception as e:
             print(f"Error adding key to config: {e}")
@@ -280,7 +367,14 @@ class XrayConfigManager:
                 return False
             
             # Сохраняем конфигурацию
-            return self._save_config(config)
+            if self._save_config(config):
+                if self._remove_inbound_via_api(f"inbound-{uuid}"):
+                    return True
+                else:
+                    print(f"Failed to remove inbound {uuid} via Xray API, restoring backup")
+                    self._restore_backup(backup_file)
+                    return False
+            return False
             
         except Exception as e:
             print(f"Error removing key from config: {e}")
@@ -296,18 +390,30 @@ class XrayConfigManager:
             config = self._load_config()
             if not config:
                 return False
+
+            existing_inbounds = [
+                inbound for inbound in config.get("inbounds", [])
+                if inbound.get("tag") and inbound.get("tag") != "api"
+            ]
             
             # Очищаем существующие inbounds (кроме API)
             config["inbounds"] = [
                 inbound for inbound in config["inbounds"]
                 if inbound.get("tag") == "api"
             ]
+
+            new_inbounds: List[Dict] = []
             
             # Добавляем inbounds для каждого ключа
             for key in keys:
                 if key.get("is_active", True):
-                    inbound = self.create_inbound_for_key(key["uuid"], key["name"])
+                    inbound = self.create_inbound_for_key(
+                        key["uuid"],
+                        key["name"],
+                        key.get("short_id")
+                    )
                     if inbound:
+                        new_inbounds.append(inbound)
                         config["inbounds"].append(inbound)
             
             # Обновляем правила маршрутизации
@@ -319,7 +425,24 @@ class XrayConfigManager:
                 return False
             
             # Сохраняем конфигурацию
-            return self._save_config(config)
+            if not self._save_config(config):
+                return False
+
+            # Обновляем inbounds через API (если доступен HandlerService)
+            new_tags = {inbound.get("tag") for inbound in new_inbounds if inbound.get("tag")}
+            for inbound in new_inbounds:
+                if not self._apply_inbound_via_api(inbound):
+                    print(f"Failed to apply inbound {inbound.get('tag')} via API, restoring backup")
+                    self._restore_backup(backup_file)
+                    return False
+
+            # Удаляем устаревшие inbounds
+            for inbound in existing_inbounds:
+                tag = inbound.get("tag")
+                if tag and tag not in new_tags:
+                    self._remove_inbound_via_api(tag)
+
+            return True
             
         except Exception as e:
             print(f"Error updating config for keys: {e}")
@@ -371,11 +494,16 @@ class XrayConfigManager:
                         fixed_count += 1
                         print(f"Fixed private key for inbound {inbound.get('tag', 'unknown')}")
                     
-                    # Исправляем Short ID
-                    if reality_settings.get("shortIds", [None])[0] != reality_keys['short_id']:
+                    # Исправляем Short ID только при отсутствии или использовании центрального значения
+                    short_ids = reality_settings.get("shortIds", [])
+                    if not short_ids:
                         reality_settings["shortIds"] = [reality_keys['short_id']]
                         fixed_count += 1
-                        print(f"Fixed short ID for inbound {inbound.get('tag', 'unknown')}")
+                        print(f"Filled missing short ID for inbound {inbound.get('tag', 'unknown')}")
+                    elif reality_keys['short_id'] in short_ids and short_ids != [reality_keys['short_id']]:
+                        reality_settings["shortIds"] = [reality_keys['short_id']]
+                        fixed_count += 1
+                        print(f"Normalized central short ID for inbound {inbound.get('tag', 'unknown')}")
             
             if fixed_count > 0:
                 print(f"Fixed Reality keys in {fixed_count} inbound(s)")
@@ -423,9 +551,9 @@ class XrayConfigManager:
 xray_config_manager = XrayConfigManager()
 
 # Функции для совместимости с API
-def add_key_to_xray_config(uuid: str, key_name: str) -> bool:
+def add_key_to_xray_config(uuid: str, key_name: str, short_id: Optional[str] = None) -> bool:
     """Добавление ключа в конфигурацию Xray"""
-    return xray_config_manager.add_key_to_config(uuid, key_name)
+    return xray_config_manager.add_key_to_config(uuid, key_name, short_id)
 
 def remove_key_from_xray_config(uuid: str) -> bool:
     """Удаление ключа из конфигурации Xray"""

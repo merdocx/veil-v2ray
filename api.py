@@ -4,6 +4,7 @@ import subprocess
 import os
 import time
 import logging
+import secrets
 from datetime import datetime
 from typing import List, Optional, Dict
 from functools import lru_cache
@@ -80,6 +81,7 @@ class VPNKey(BaseModel):
     created_at: str
     is_active: bool
     port: Optional[int] = None
+    short_id: Optional[str] = None
 
 class CreateKeyRequest(BaseModel):
     name: str
@@ -304,6 +306,9 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
         
         # Генерация UUID для ключа
         key_uuid = str(uuid.uuid4())
+
+        # Генерация shortId для Reality (необходим только для новых ключей)
+        short_id = secrets.token_hex(8)
         
         # Назначаем порт для ключа
         assigned_port = assign_port_for_key(key_uuid, str(uuid.uuid4()), key_request.name)
@@ -317,7 +322,8 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
             "uuid": key_uuid,
             "created_at": datetime.now().isoformat(),
             "is_active": True,
-            "port": assigned_port
+            "port": assigned_port,
+            "short_id": short_id
         }
         
         # Загрузка существующих ключей
@@ -325,21 +331,12 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
         save_keys(keys)
         
         # Добавляем ключ в конфигурацию Xray с индивидуальным портом
-        if not add_key_to_xray_config(key_uuid, key_request.name):
+        if not add_key_to_xray_config(key_uuid, key_request.name, short_id):
             # Откатываем изменения при ошибке
             keys = [k for k in keys if k["uuid"] != key_uuid]
             save_keys(keys)
             release_port_for_key(key_uuid)
             raise HTTPException(status_code=500, detail="Failed to add key to Xray config")
-        
-        # Перезапуск Xray
-        if not restart_xray():
-            # Откатываем изменения при ошибке
-            keys = [k for k in keys if k["uuid"] != key_uuid]
-            save_keys(keys)
-            release_port_for_key(key_uuid)
-            remove_key_from_xray_config(key_uuid)
-            raise HTTPException(status_code=500, detail="Failed to restart Xray service")
         
         # Инициализируем историю трафика для нового ключа
         try:
@@ -388,10 +385,6 @@ async def delete_key(key_id: str, request: Request, api_key: str = Depends(verif
         # Удаление ключа из списка
         keys = [k for k in keys if k["id"] != key_to_delete["id"]]
         save_keys(keys)
-        
-        # Перезапуск Xray
-        if not restart_xray():
-            raise HTTPException(status_code=500, detail="Failed to restart Xray service")
         
         return {"message": "Key deleted successfully"}
         
@@ -456,11 +449,17 @@ async def get_key_config(key_id: str, api_key: str = Depends(verify_api_key)):
             key["name"],
             str(port) if port else "443"
         ], capture_output=True, text=True, check=True)
-        
-        return {
+
+        vless_url = result.stdout.strip()
+        response = {
             "key": VPNKey(**key),
-            "client_config": result.stdout
+            "client_config": vless_url,
+            "vless_url": vless_url
         }
+        if key.get("short_id"):
+            response["short_id"] = key["short_id"]
+        
+        return response
         
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate client config: {e.stderr}")
@@ -651,6 +650,35 @@ async def get_xray_config_status_endpoint(api_key: str = Depends(verify_api_key)
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get Xray config status: {str(e)}")
+
+
+@app.get("/api/system/xray/inbounds")
+async def list_xray_inbounds(api_key: str = Depends(verify_api_key)):
+    """Список активных VLESS inbound'ов согласно конфигурации"""
+    try:
+        config = load_config()
+        inbounds = []
+        for inbound in config.get("inbounds", []):
+            if inbound.get("protocol") != "vless":
+                continue
+            clients = inbound.get("settings", {}).get("clients", [])
+            reality_settings = inbound.get("streamSettings", {}).get("realitySettings", {})
+            inbounds.append({
+                "tag": inbound.get("tag"),
+                "port": inbound.get("port"),
+                "client_count": len(clients),
+                "uuids": [client.get("id") for client in clients],
+                "short_ids": reality_settings.get("shortIds", []),
+                "dest": reality_settings.get("dest"),
+                "server_names": reality_settings.get("serverNames", [])
+            })
+        return {
+            "inbounds": inbounds,
+            "timestamp": int(time.time()),
+            "source": "config.json"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list Xray inbounds: {str(e)}")
 
 @app.post("/api/system/xray/sync-config")
 async def sync_xray_config_endpoint(api_key: str = Depends(verify_api_key)):

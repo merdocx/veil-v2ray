@@ -28,7 +28,10 @@
 - `POST /api/system/ports/reset` - сброс портов
 - `GET /api/system/traffic/summary` - сводка трафика
 - `GET /api/system/xray/config-status` - статус конфигурации Xray
+- `GET /api/system/xray/inbounds` - список активных inbound'ов
 - `POST /api/system/xray/sync-config` - синхронизация конфигурации
+
+> **Важно:** новые ключи получают уникальный `short_id` (16-значный hex). Поле присутствует в ответах `POST /api/keys`, `GET /api/keys`, `GET /api/keys/{key_id}` и `GET /api/keys/{key_id}/config`. Эндпоинт `/api/keys/{key_id}/config` возвращает VLESS URL одновременно в полях `client_config` и `vless_url`.
 
 ## Примеры запросов
 

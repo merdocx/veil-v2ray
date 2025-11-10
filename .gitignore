@@ -24,4 +24,7 @@ Thumbs.db
 
 # Временные файлы
 *.tmp
-*.temp config/backups/*.json
+*.temp
+
+# Резервные конфигурации
+config/backups/

@@ -1,6 +1,6 @@
 # VPN Key Management API - Документация
 
-## Версия API: 2.2.0
+## Версия API: 2.2.1
 
 ### Обзор
 API для управления VPN ключами с поддержкой VLESS+Reality протокола, индивидуальных портов и мониторинга трафика.
@@ -37,9 +37,12 @@ API для управления VPN ключами с поддержкой VLESS
     "uuid": "vless-uuid",
     "created_at": "2025-08-05T12:00:00.000000",
     "is_active": true,
-    "port": 10001
+    "port": 10001,
+    "short_id": "5f9c2b7adfe7d8ab"
 }
 ```
+
+Поле `short_id` появляется для новых ключей и используется в параметре `sid` VLESS-ссылки. У существующих ключей поле может отсутствовать, пока вы не перевыпустите их.
 
 **Пример:**
 ```bash
@@ -63,7 +66,8 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
         "uuid": "vless-uuid",
         "created_at": "2025-08-05T12:00:00.000000",
         "is_active": true,
-        "port": 10001
+        "port": 10001,
+        "short_id": "5f9c2b7adfe7d8ab"
     }
 ]
 ```
@@ -76,7 +80,7 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
 ### Получение конфигурации ключа
 **GET** `/api/keys/{key_id}/config`
 
-Возвращает VLESS URL и QR код для клиентской конфигурации.
+Возвращает VLESS URL (одновременно в полях `client_config` и `vless_url`) и метаданные ключа. Если для ключа есть собственный `short_id`, он передаётся отдельным полем.
 
 **Ответ:**
 ```json
@@ -87,10 +91,12 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
         "uuid": "vless-uuid",
         "created_at": "2025-08-05T12:00:00.000000",
         "is_active": true,
-        "port": 10001
+        "port": 10001,
+        "short_id": "5f9c2b7adfe7d8ab"
     },
-    "vless_url": "vless://uuid@SERVER_ADDRESS:PORT?security=reality&sni=example.com&fp=chrome&pbk=public-key&sid=session-id&type=tcp&flow=xtls-rprx-vision#user@example.com",
-    "qr_code_data": "vless://uuid@SERVER_ADDRESS:PORT?security=reality&sni=example.com&fp=chrome&pbk=public-key&sid=session-id&type=tcp&flow=xtls-rprx-vision#user@example.com"
+    "client_config": "vless://uuid@SERVER_ADDRESS:PORT?security=reality&sni=example.com&fp=chrome&pbk=public-key&sid=5f9c2b7adfe7d8ab&type=tcp&flow=xtls-rprx-vision#user@example.com",
+    "vless_url": "vless://uuid@SERVER_ADDRESS:PORT?security=reality&sni=example.com&fp=chrome&pbk=public-key&sid=5f9c2b7adfe7d8ab&type=tcp&flow=xtls-rprx-vision#user@example.com",
+    "short_id": "5f9c2b7adfe7d8ab"
 }
 ```
 
@@ -469,6 +475,11 @@ curl -H "X-API-Key: your-api-key" "https://SERVER_ADDRESS:8000/api/keys/key-id/t
 **GET** `/api/system/xray/config-status`
 
 Возвращает статус конфигурации Xray.
+
+### Список inbound'ов Xray
+**GET** `/api/system/xray/inbounds`
+
+Возвращает информацию о VLESS inbound'ах согласно `config.json` (порт, UUID, shortIds).
 
 ### Синхронизация конфигурации Xray
 **POST** `/api/system/xray/sync-config`
