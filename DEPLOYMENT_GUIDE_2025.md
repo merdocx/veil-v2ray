@@ -1,8 +1,8 @@
 # 🚀 Руководство по разворачиванию VPN сервера (2025)
 
-**Версия:** 2.1.4  
-**Дата обновления:** 22 октября 2025  
-**Xray версия:** v25.10.15 (последняя)
+**Версия:** 2.2.0  
+**Дата обновления:** 10 ноября 2025  
+**Xray:** устанавливается скриптом `update_xray.sh` (всегда последняя доступная версия)
 
 ---
 
@@ -54,55 +54,33 @@ sudo usermod -aG sudo vpn
 
 ---
 
-## 📦 **Шаг 2: Установка Xray v25.10.15**
+## 📦 **Шаг 2: Установка и обновление Xray**
 
-### **2.1 Скачивание и установка Xray**
+### **2.1 Использование штатного скрипта**
 ```bash
-# Определение архитектуры
-ARCH=$(uname -m)
-case $ARCH in
-    x86_64) ARCH="64";;
-    aarch64) ARCH="arm64-v8a";;
-    armv7l) ARCH="arm32-v7a";;
-    *) echo "Неподдерживаемая архитектура: $ARCH"; exit 1;;
-esac
+cd /root/vpn-server
 
-# Скачивание Xray
-cd /tmp
-wget "https://github.com/XTLS/Xray-core/releases/download/v25.10.15/Xray-linux-$ARCH.zip"
-unzip "Xray-linux-$ARCH.zip"
+# Проверка доступности обновления (без прав root)
+./update_xray.sh --check
 
-# Установка
-sudo cp xray /usr/local/bin/
-sudo chmod +x /usr/local/bin/xray
-
-# Проверка установки
-/usr/local/bin/xray version
+# Установка/обновление до последней версии (нужен root)
+sudo ./update_xray.sh
 ```
 
-### **2.2 Создание systemd сервиса**
+Скрипт автоматически:
+- определяет архитектуру и скачивает последнюю версию Xray с GitHub;
+- создаёт резервные копии бинарника и конфигураций;
+- прогоняет `xray test` и откатывает изменения при ошибке;
+- перезапускает сервис.
+
+### **2.2 Установка systemd сервиса**
 ```bash
-sudo tee /etc/systemd/system/xray.service > /dev/null << 'EOF'
-[Unit]
-Description=Xray Service
-Documentation=https://github.com/xtls
-After=network.target nss-lookup.target
-
-[Service]
-Type=simple
-User=root
-ExecStart=/usr/local/bin/xray run -config /root/vpn-server/config/config.json
-Restart=on-failure
-RestartSec=5s
-LimitNOFILE=1048576
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
+sudo cp /root/vpn-server/systemd/xray.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable xray
 ```
+
+Файл из репозитория уже содержит расширенные параметры безопасности (`CapabilityBoundingSet`, `RestrictNamespaces` и др.). При необходимости скорректируйте пути перед запуском.
 
 ---
 
@@ -121,42 +99,13 @@ source venv/bin/activate
 ```
 
 ### **3.3 Установка зависимостей**
+Файл `requirements.txt` уже входит в репозиторий (актуальная версия: **2.2.0**, дата: **2025-11-01**).
+
 ```bash
-# Создание requirements.txt
-cat > requirements.txt << 'EOF'
-# VPN Server Dependencies
-# Версия: 2.1.4
-# Дата: 2025-10-22
-
-# Основные зависимости
-fastapi==0.116.1
-uvicorn[standard]==0.35.0
-pydantic==2.11.7
-python-multipart==0.0.20
-requests==2.32.4
-
-# Логирование и мониторинг
-structlog==23.2.0
-psutil==5.9.6
-
-# Безопасность
-slowapi==0.1.9
-
-# Тестирование
-pytest==7.4.3
-pytest-asyncio==0.21.1
-
-# Дополнительные утилиты
-click==8.2.2
-certifi==2025.7.14
-charset-normalizer==3.4.2
-idna==3.10
-urllib3==2.5.0
-EOF
-
-# Установка зависимостей
 pip install -r requirements.txt
 ```
+
+При обновлениях зависимостей обновляйте файл в репозитории, чтобы при следующем развёртывании использовать те же версии.
 
 ---
 
@@ -238,54 +187,13 @@ sudo chmod 600 /etc/ssl/private/vpn-api.key
 sudo chmod 644 /etc/ssl/certs/vpn-api.crt
 ```
 
-### **5.3 Создание базовой конфигурации Xray**
-```bash
-mkdir -p /root/vpn-server/config
-
-# Создание базовой конфигурации Xray
-cat > /root/vpn-server/config/config.json << 'EOF'
-{
-  "log": {
-    "loglevel": "info",
-    "access": "/root/vpn-server/logs/xray-access.log",
-    "error": "/root/vpn-server/logs/xray-error.log"
-  },
-  "inbounds": [
-    {
-      "listen": "0.0.0.0",
-      "port": 443,
-      "protocol": "vless",
-      "settings": {
-        "clients": [],
-        "decryption": "none"
-      },
-      "streamSettings": {
-        "network": "tcp",
-        "security": "reality",
-        "realitySettings": {
-          "show": false,
-          "dest": "www.microsoft.com:443",
-          "xver": 0,
-          "serverNames": [
-            "www.microsoft.com"
-          ],
-          "privateKey": "your-private-key-here",
-          "shortIds": [
-            "your-short-id-here"
-          ]
-        }
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "protocol": "freedom",
-      "settings": {}
-    }
-  ]
-}
-EOF
-```
+### **5.3 Конфигурация Xray**
+- Базовый файл `config/config.json` поставляется вместе с проектом и содержит набор inbound’ов, портов и Reality-настроек.  
+- При переносе сервера скопируйте актуальные файлы `config/*.json` с работающей инсталляции или отредактируйте шаблон под свои ключи.
+- Для новых развёртываний:
+  1. Скопируйте `config/config.json` из репозитория.
+  2. Сгенерируйте новые Reality `privateKey` и `shortIds` (см. шаг 6) и пропишите их для каждого inbound.
+  3. Обновите список клиентов (`clients`/`email`/`id`) в соответствии с планом доступа.
 
 ### **5.4 Инициализация файлов данных**
 ```bash
@@ -335,29 +243,14 @@ rm -f reality_keys.txt reality_public.txt
 
 ## 🚀 **Шаг 7: Запуск сервисов**
 
-### **7.1 Создание systemd сервиса для VPN API**
+### **7.1 Подключение systemd сервиса для VPN API**
 ```bash
-sudo tee /etc/systemd/system/vpn-api.service > /dev/null << 'EOF'
-[Unit]
-Description=VPN Key Management API
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/root/vpn-server
-Environment=PATH=/root/vpn-server/venv/bin
-ExecStart=/root/vpn-server/venv/bin/python /root/vpn-server/api.py
-Restart=always
-RestartSec=5s
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
+sudo cp /root/vpn-server/systemd/vpn-api.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable vpn-api
 ```
+
+В файле уже прописан путь к виртуальному окружению и рабочей директории. Поправьте пути, если проект разворачивается не в `/root/vpn-server`.
 
 ### **7.2 Настройка Nginx (опционально)**
 ```bash
@@ -409,7 +302,7 @@ sudo systemctl status nginx
 sudo systemctl status xray vpn-api nginx
 
 # Проверка портов
-sudo netstat -tlnp | grep -E ":443|:8000"
+sudo ss -tlnp | grep -E ":443|:8000"
 
 # Проверка логов
 sudo journalctl -u xray -f
@@ -482,19 +375,13 @@ curl -k https://localhost:8000/health
 ```
 
 ### **10.2 Автоматическое обновление Xray**
-```bash
-# Создание скрипта обновления
-sudo tee /usr/local/bin/update-xray.sh > /dev/null << 'EOF'
-#!/bin/bash
-# Скрипт обновления Xray (из проекта)
-/root/vpn-server/update_xray.sh
-EOF
-
-sudo chmod +x /usr/local/bin/update-xray.sh
-
-# Добавление в cron для автоматического обновления (опционально)
-# echo "0 2 * * 0 /usr/local/bin/update-xray.sh" | sudo crontab -
-```
+- Для проверки обновлений без простой: `cd /root/vpn-server && ./update_xray.sh --check`.
+- Для установки последней версии: `sudo ./update_xray.sh`.
+- Пример cron-задачи (ежедневно в 04:00 по Москве = 01:00 UTC):
+  ```
+  0 1 * * * /root/vpn-server/update_xray.sh >> /root/vpn-server/logs/xray_update.log 2>&1
+  ```
+- Если нужно получать уведомления, настройте отправку почты cron или интеграцию с внешними сервисами на основе кода возврата (`0` — актуально, `1` — доступно обновление, >1 — ошибка).
 
 ---
 
@@ -509,7 +396,7 @@ sudo chmod +x /usr/local/bin/update-xray.sh
 sudo journalctl -u xray -f
 
 # Проверка портов
-sudo netstat -tlnp | grep :443
+sudo ss -tlnp | grep :443
 ```
 
 ### **Проблема: VPN API не отвечает**
@@ -521,7 +408,7 @@ sudo systemctl status vpn-api
 sudo journalctl -u vpn-api -f
 
 # Проверка портов
-sudo netstat -tlnp | grep :8000
+sudo ss -tlnp | grep :8000
 
 # Проверка переменных окружения
 cat /root/vpn-server/.env
@@ -559,7 +446,7 @@ sudo rm /etc/ssl/certs/vpn-api.crt /etc/ssl/private/vpn-api.key
 
 После выполнения всех шагов у вас будет:
 
-✅ **Полнофункциональный VPN сервер** с Xray v25.10.15  
+✅ **Полнофункциональный VPN сервер** с актуальной версией Xray  
 ✅ **RESTful API** для управления ключами  
 ✅ **HTTPS поддержка** для безопасности  
 ✅ **Health check** для мониторинга  

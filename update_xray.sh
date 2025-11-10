@@ -3,6 +3,9 @@
 # Скрипт обновления Xray до последней версии
 # Автор: VPN Server Management
 # Дата: $(date +%Y-%m-%d)
+# Использование:
+#   sudo ./update_xray.sh        # обновление до последней версии
+#   ./update_xray.sh --check     # только проверка (возвращает 1, если доступно обновление)
 
 set -e  # Остановка при ошибке
 
@@ -30,13 +33,19 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Проверка прав root
-if [ "$EUID" -ne 0 ]; then
+# Режим выполнения: обновление по умолчанию
+MODE="update"
+if [[ "$1" == "--check" ]]; then
+    MODE="check"
+fi
+
+# Проверка прав root только для режима обновления
+if [[ "$MODE" == "update" ]] && [ "$EUID" -ne 0 ]; then
     print_error "Запустите скрипт с правами root: sudo $0"
     exit 1
 fi
 
-print_info "=== Обновление Xray до последней версии ==="
+print_info "=== $( [[ \"$MODE\" == \"check\" ]] && echo \"Проверка\" || echo \"Обновление\" ) Xray до последней версии ==="
 
 # Получение текущей версии
 CURRENT_VERSION=$(/usr/local/bin/xray version | head -n1 | grep -o 'Xray [0-9.]*' | cut -d' ' -f2)
@@ -49,8 +58,17 @@ print_info "Последняя версия: $LATEST_VERSION"
 
 # Проверка необходимости обновления
 if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
-    print_success "Xray уже обновлен до последней версии!"
+    if [[ "$MODE" == "check" ]]; then
+        print_success "Xray обновлен до последней версии ($CURRENT_VERSION)."
+    else
+        print_success "Xray уже обновлен до последней версии!"
+    fi
     exit 0
+fi
+
+if [[ "$MODE" == "check" ]]; then
+    print_warning "Доступно обновление Xray: текущая $CURRENT_VERSION, последняя $LATEST_VERSION"
+    exit 1
 fi
 
 print_warning "Обновление с $CURRENT_VERSION до $LATEST_VERSION"
@@ -107,7 +125,8 @@ fi
 
 # Резервная копия старого бинарника
 print_info "Создание резервной копии старого бинарника..."
-cp /usr/local/bin/xray /usr/local/bin/xray.backup.$(date +%Y%m%d_%H%M%S)
+BACKUP_BIN="/usr/local/bin/xray.backup.$(date +%Y%m%d_%H%M%S)"
+cp /usr/local/bin/xray "$BACKUP_BIN"
 
 # Установка новой версии
 print_info "Установка новой версии Xray..."
@@ -130,7 +149,7 @@ print_info "Проверка конфигурации..."
 if [ $? -ne 0 ]; then
     print_error "Ошибка в конфигурации после обновления!"
     print_warning "Восстановление из резервной копии..."
-    cp /usr/local/bin/xray.backup.* /usr/local/bin/xray
+    cp "$BACKUP_BIN" /usr/local/bin/xray
     systemctl start xray
     exit 1
 fi
@@ -157,7 +176,8 @@ rm -f /tmp/xray-linux-$ARCH.zip /tmp/xray
 print_info "=== Финальная проверка ==="
 print_info "Версия Xray: $(/usr/local/bin/xray version | head -n1)"
 print_info "Статус сервиса: $(systemctl is-active xray)"
-print_info "Порт 443: $(netstat -tlnp | grep :443 | wc -l) активных соединений"
+ACTIVE_443=$(ss -tlnp | awk '/:443[[:space:]]/ {count++} END {print count+0}')
+print_info "Порт 443: $ACTIVE_443 активных соединений"
 
 print_success "=== Обновление завершено успешно! ==="
 print_info "Резервная копия сохранена в: $BACKUP_DIR"
