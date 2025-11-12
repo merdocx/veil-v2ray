@@ -275,7 +275,11 @@ class XrayConfigManager:
                         "www.google.com",
                         "www.github.com",
                         "www.apple.com",
-                        "www.amazon.com"
+                        "www.amazon.com",
+                        "static.reddit.com",
+                        "speedtest.net",
+                        "www.adobe.com",
+                        "global.shopify.com"
                     ],
                     "privateKey": reality_keys['private_key'],
                     "shortIds": short_ids,
