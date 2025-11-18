@@ -10,6 +10,9 @@ import requests
 import json
 import logging
 import os
+from typing import Any, Dict
+
+import psutil
 
 # Настройка логирования
 logging.basicConfig(
@@ -21,6 +24,92 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+ENV_PATH = "/root/vpn-server/.env"
+STATE_FILE = "/root/vpn-server/logs/monitor_state.json"
+
+
+def load_env_file(path: str):
+    if not os.path.exists(path):
+        return
+    with open(path, "r", encoding="utf-8") as env_file:
+        for line in env_file:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip())
+
+
+load_env_file(ENV_PATH)
+
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TELEGRAM_ENABLED = bool(TELEGRAM_TOKEN and TELEGRAM_CHAT_ID)
+
+CPU_THRESHOLD = float(os.getenv("CPU_THRESHOLD", "75"))
+CPU_ALERT_COUNT = int(os.getenv("CPU_ALERT_COUNT", "5"))
+
+
+def send_telegram_message(text: str):
+    if not TELEGRAM_ENABLED:
+        return
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": text,
+            "disable_web_page_preview": True,
+        }
+        response = requests.post(url, data=payload, timeout=5)
+        if response.status_code != 200:
+            logger.error(
+                "Failed to send Telegram message: %s", response.text[:200]
+            )
+    except Exception as exc:
+        logger.error("Telegram notification error: %s", exc)
+
+
+def load_state() -> Dict[str, Any]:
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception as exc:
+            logger.error("Failed to load monitor state: %s", exc)
+    return {"cpu_high_count": 0, "last_cpu": 0.0}
+
+
+def save_state(state: Dict[str, Any]):
+    try:
+        os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+        with open(STATE_FILE, "w", encoding="utf-8") as fh:
+            json.dump(state, fh, indent=2)
+    except Exception as exc:
+        logger.error("Failed to save monitor state: %s", exc)
+
+
+def check_cpu_usage(state: Dict[str, Any]):
+    cpu_usage = psutil.cpu_percent(interval=1)
+    state["last_cpu"] = cpu_usage
+    logger.info("CPU usage: %.1f%%", cpu_usage)
+
+    if cpu_usage >= CPU_THRESHOLD:
+        state["cpu_high_count"] = state.get("cpu_high_count", 0) + 1
+        logger.warning(
+            "CPU usage above threshold %.1f%% (%d/%d)",
+            CPU_THRESHOLD,
+            state["cpu_high_count"],
+            CPU_ALERT_COUNT,
+        )
+        if state["cpu_high_count"] >= CPU_ALERT_COUNT:
+            send_telegram_message(
+                f"⚠️ CPU load {cpu_usage:.1f}% превышает порог {CPU_THRESHOLD}% "
+                f"{CPU_ALERT_COUNT} проверок подряд"
+            )
+            state["cpu_high_count"] = 0
+    else:
+        state["cpu_high_count"] = 0
 
 # Отключение предупреждений SSL
 requests.packages.urllib3.disable_warnings()
@@ -135,6 +224,7 @@ def restart_api():
 def main():
     """Основная функция мониторинга"""
     logger.info("=== VPN Health Check ===")
+    state = load_state()
     
     xray_ok = check_xray()
     ports_ok = check_ports()
@@ -145,29 +235,41 @@ def main():
     if not xray_ok:
         issues.append("Xray")
         logger.error("Xray is not running, attempting restart...")
+        send_telegram_message("⚠️ Xray сервис не активен. Перезапуск...")
         if restart_xray():
             logger.info("✅ Xray restarted successfully")
+            send_telegram_message("✅ Xray перезапущен успешно")
         else:
             logger.error("❌ Failed to restart Xray")
+            send_telegram_message("❌ Ошибка перезапуска Xray")
     
     if not ports_ok and xray_ok:
         issues.append("Ports")
         logger.warning("Some VPN ports are not open, restarting Xray...")
+        send_telegram_message("⚠️ Обнаружены проблемы с VPN портами. Запускаю перезапуск Xray")
         restart_xray()
     
     if not api_ok:
         issues.append("API")
         logger.error("API is not responding, attempting restart...")
+        send_telegram_message("⚠️ API не отвечает. Перезапуск службы...")
         if restart_api():
             logger.info("✅ API restarted successfully")
+            send_telegram_message("✅ API перезапущен успешно")
         else:
             logger.error("❌ Failed to restart API")
+            send_telegram_message("❌ Ошибка перезапуска API")
     
     if xray_ok and ports_ok and api_ok:
         logger.info("✅ All checks passed - system healthy")
+        check_cpu_usage(state)
+        save_state(state)
         return 0
     else:
         logger.warning(f"⚠️  Issues detected: {', '.join(issues)}")
+        send_telegram_message(f"⚠️ Обнаружены проблемы мониторинга: {', '.join(issues)}")
+        check_cpu_usage(state)
+        save_state(state)
         return 1
 
 if __name__ == '__main__':

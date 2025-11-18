@@ -172,7 +172,14 @@ EOF
 # Инициализация файлов данных
 echo '[]' > config/keys.json
 echo "{\"used_ports\": {}, \"port_assignments\": {}, \"created_at\": \"$(date -Iseconds)\", \"last_updated\": \"$(date -Iseconds)\"}" > config/ports.json
-echo '{"keys": {}, "daily_stats": {}, "monthly_stats": {}}' > config/traffic_history.json
+cat > config/traffic_history.json <<EOF
+{
+  "version": "2.0",
+  "created_at": "$(date -Iseconds)",
+  "keys_history": {},
+  "last_update": "$(date -Iseconds)"
+}
+EOF
 
 # Шаг 7: Создание systemd сервисов
 print_info "Создание systemd сервисов..."

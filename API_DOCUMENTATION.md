@@ -162,6 +162,8 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
 
 ## 📈 Исторические данные о трафике
 
+> **Важно:** начиная с snapshot-версии 2.0 мы храним только накопительный `total_bytes` по каждому ключу. История по дням/месяцам не сохраняется, поэтому соответствующие эндпоинты возвращают заглушки с `history_tracking: false`.
+
 ### Общая история трафика
 **GET** `/api/traffic/history`
 
@@ -173,32 +175,16 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
     "status": "success",
     "data": {
         "total_keys": 2,
-        "active_keys": 1,
         "total_traffic_bytes": 198,
-        "total_rx_bytes": 99,
-        "total_tx_bytes": 99,
+        "last_update": "2025-08-05T16:06:47.590883",
         "keys": [
             {
                 "key_uuid": "dc41f2d0-7741-43d2-b0c4-193cd8dd16ce",
-                "key_name": "zhdanov@gmail.com",
-                "port": 10002,
-                "created_at": "2025-08-05T16:06:36.865147",
-                "last_activity": "2025-08-05T16:06:47.590883",
-                "is_active": true,
                 "total_traffic": {
-                    "total_bytes": 198,
-                    "rx_bytes": 99,
-                    "tx_bytes": 99,
-                    "total_connections": 35,
-                    "total_formatted": "198 B",
-                    "rx_formatted": "99 B",
-                    "tx_formatted": "99 B"
+                    "total_bytes": 198
                 }
             }
-        ],
-        "total_traffic_formatted": "198 B",
-        "total_rx_formatted": "99 B",
-        "total_tx_formatted": "99 B"
+        ]
     },
     "timestamp": "2025-08-05T16:06:36.865907"
 }
@@ -215,28 +201,8 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
     "status": "success",
     "data": {
         "key_uuid": "dc41f2d0-7741-43d2-b0c4-193cd8dd16ce",
-        "key_name": "zhdanov@gmail.com",
-        "port": 10002,
-        "created_at": "2025-08-05T16:06:36.865147",
-        "last_activity": "2025-08-05T16:06:47.590883",
-        "is_active": true,
         "total_traffic": {
-            "total_bytes": 198,
-            "rx_bytes": 99,
-            "tx_bytes": 99,
-            "total_connections": 35,
-            "total_formatted": "198 B",
-            "rx_formatted": "99 B",
-            "tx_formatted": "99 B"
-        },
-        "daily_stats": {
-            "2025-08-05": {
-                "total_bytes": 198,
-                "rx_bytes": 99,
-                "tx_bytes": 99,
-                "max_connections": 35,
-                "sessions": 2
-            }
+            "total_bytes": 198
         }
     },
     "timestamp": "2025-08-05T16:06:47.593730"
@@ -246,7 +212,7 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
 ### Ежедневная статистика
 **GET** `/api/traffic/daily/{date}`
 
-Возвращает ежедневную статистику трафика (формат даты: YYYY-MM-DD).
+Возвращает ежедневную статистику трафика (формат даты: YYYY-MM-DD). История отключена, поэтому возвращается заглушка.
 
 **Ответ:**
 ```json
@@ -254,11 +220,8 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
     "status": "success",
     "data": {
         "date": "2025-08-05",
-        "total_bytes": 396,
-        "total_connections": 35,
-        "active_keys": 0,
-        "total_sessions": 2,
-        "total_formatted": "396 B"
+        "total_bytes": 0,
+        "history_tracking": false
     },
     "timestamp": "2025-08-05T16:06:51.354243"
 }
@@ -282,7 +245,7 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
 ### Очистка старых данных
 **POST** `/api/traffic/history/cleanup?days_to_keep=30`
 
-Очищает старые данные истории трафика (по умолчанию 30 дней).
+Эндпоинт оставлен для совместимости. В snapshot-режиме операция ничего не удаляет, но возвращает успех.
 
 **Ответ:**
 ```json
@@ -313,53 +276,22 @@ curl -X POST "https://SERVER_ADDRESS:8000/api/keys" \
     "data": {
         "year_month": "2025-08",
         "total_keys": 2,
-        "active_keys": 2,
-        "total_traffic_bytes": 38468204.02026367,
-        "total_rx_bytes": 19234101.0,
-        "total_tx_bytes": 19234101.0,
-        "total_connections": 271,
-        "total_sessions": 28,
+        "total_traffic_bytes": 38468204,
+        "history_tracking": false,
         "keys": [
             {
                 "key_uuid": "0e5ff24b-c47b-4193-ae76-3ba8233a1930",
-                "key_name": "nvipetrenko@gmail.com",
-                "port": 10001,
-                "created_at": "2025-08-05T16:06:36.864003",
-                "last_activity": "2025-08-05T17:49:51.981637",
-                "is_active": true,
-                "monthly_traffic": {
-                    "total_bytes": 38467682.02026367,
-                    "rx_bytes": 19233840.0,
-                    "tx_bytes": 19233840.0,
-                    "max_connections": 271,
-                    "sessions": 5,
-                    "total_formatted": "36.69 MB",
-                    "rx_formatted": "18.34 MB",
-                    "tx_formatted": "18.34 MB"
+                "total_traffic": {
+                    "total_bytes": 38467682
                 }
             },
             {
                 "key_uuid": "dc41f2d0-7741-43d2-b0c4-193cd8dd16ce",
-                "key_name": "zhdanov@gmail.com",
-                "port": 10002,
-                "created_at": "2025-08-05T16:06:36.865147",
-                "last_activity": "2025-08-05T17:49:51.983284",
-                "is_active": true,
-                "monthly_traffic": {
-                    "total_bytes": 522,
-                    "rx_bytes": 261,
-                    "tx_bytes": 261,
-                    "max_connections": 252,
-                    "sessions": 23,
-                    "total_formatted": "522 B",
-                    "rx_formatted": "261 B",
-                    "tx_formatted": "261 B"
+                "total_traffic": {
+                    "total_bytes": 522
                 }
             }
-        ],
-        "total_traffic_formatted": "36.69 MB",
-        "total_rx_formatted": "18.34 MB",
-        "total_tx_formatted": "18.34 MB"
+        ]
     },
     "timestamp": "2025-08-05T17:49:51.983284"
 }
@@ -388,31 +320,12 @@ curl -H "X-API-Key: your-api-key" "https://SERVER_ADDRESS:8000/api/traffic/month
     "status": "success",
     "data": {
         "key_uuid": "0e5ff24b-c47b-4193-ae76-3ba8233a1930",
-        "key_name": "nvipetrenko@gmail.com",
-        "port": 10001,
-        "created_at": "2025-08-05T16:06:36.864003",
-        "last_activity": "2025-08-05T17:49:46.365707",
-        "is_active": true,
-        "year_month": "2025-08",
-        "monthly_traffic": {
-            "total_bytes": 38467682.02026367,
-            "rx_bytes": 19233840.0,
-            "tx_bytes": 19233840.0,
-            "max_connections": 271,
-            "sessions": 4,
-            "total_formatted": "36.69 MB",
-            "rx_formatted": "18.34 MB",
-            "tx_formatted": "18.34 MB"
+        "total_traffic": {
+            "total_bytes": 38467682
         },
-        "daily_breakdown": {
-            "2025-08-05": {
-                "total_bytes": 38467682.02026367,
-                "rx_bytes": 19233840.0,
-                "tx_bytes": 19233840.0,
-                "max_connections": 271,
-                "sessions": 4
-            }
-        }
+        "year_month": "2025-08",
+        "daily_breakdown": {},
+        "history_tracking": false
     },
     "timestamp": "2025-08-05T17:49:46.365707"
 }
@@ -555,22 +468,7 @@ curl -H "X-API-Key: your-api-key" \
 ```json
 {
     "total_traffic": {
-        "total_bytes": "integer",
-        "rx_bytes": "integer", 
-        "tx_bytes": "integer",
-        "total_connections": "integer",
-        "total_formatted": "string",
-        "rx_formatted": "string",
-        "tx_formatted": "string"
-    },
-    "daily_stats": {
-        "YYYY-MM-DD": {
-            "total_bytes": "integer",
-            "rx_bytes": "integer",
-            "tx_bytes": "integer", 
-            "max_connections": "integer",
-            "sessions": "integer"
-        }
+        "total_bytes": "integer"
     }
 }
 ``` 

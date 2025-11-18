@@ -136,7 +136,7 @@ git clone <your-repository-url> /root/vpn-server
 ├── port_manager.py             # Управление портами
 ├── xray_config_manager.py      # Управление конфигурацией Xray
 ├── simple_traffic_monitor.py   # Мониторинг трафика
-├── traffic_history_manager.py  # Исторические данные трафика
+├── traffic_history_manager.py  # Снимок накопительного трафика
 ├── generate_client_config.py   # Генерация клиентских конфигураций
 ├── requirements.txt            # Python зависимости
 ├── .env                       # Переменные окружения
@@ -144,7 +144,7 @@ git clone <your-repository-url> /root/vpn-server
 │   ├── config.template.json          # Шаблон конфигурации Xray
 │   ├── keys.template.json            # Пустая база ключей
 │   ├── ports.template.json           # Шаблон назначений портов
-│   └── traffic_history.template.json # Заготовка истории трафика
+│   └── traffic_history.template.json # Заготовка snapshot-файла трафика
 └── logs/                      # Логи приложения
 ```
 
@@ -201,7 +201,7 @@ sudo chmod 644 /etc/ssl/certs/vpn-api.crt
   - `config/config.template.json`
   - `config/keys.template.json`
   - `config/ports.template.json`
-  - `config/traffic_history.template.json`
+  - `config/traffic_history.template.json` (содержит snapshot-структуру только для накопительных `total_bytes`)
   - `config/keys.example.env`
 - Для нового сервера скопируйте шаблоны в рабочие файлы:
   ```bash
