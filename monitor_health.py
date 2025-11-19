@@ -46,6 +46,7 @@ load_env_file(ENV_PATH)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 TELEGRAM_ENABLED = bool(TELEGRAM_TOKEN and TELEGRAM_CHAT_ID)
+SERVER_NAME = os.getenv("SERVER_NAME", "VPN Server")
 
 CPU_THRESHOLD = float(os.getenv("CPU_THRESHOLD", "75"))
 CPU_ALERT_COUNT = int(os.getenv("CPU_ALERT_COUNT", "5"))
@@ -55,10 +56,12 @@ def send_telegram_message(text: str):
     if not TELEGRAM_ENABLED:
         return
     try:
+        # Добавляем префикс с названием сервера
+        message = f"🖥️ [{SERVER_NAME}]\n\n{text}"
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         payload = {
             "chat_id": TELEGRAM_CHAT_ID,
-            "text": text,
+            "text": message,
             "disable_web_page_preview": True,
         }
         response = requests.post(url, data=payload, timeout=5)
