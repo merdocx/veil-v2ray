@@ -264,11 +264,9 @@ rm -f reality_keys.txt reality_public.txt
 - `www.google.com`
 - `www.github.com`
 - `www.apple.com`
-- `www.amazon.com`
-- `static.reddit.com`
-- `speedtest.net`
+- `www.facebook.com`
 - `www.adobe.com`
-- `global.shopify.com`
+- `www.instagram.com`
 
 Вы можете дополнять список собственными доменами (главное — действующий сертификат и доступность из сети клиентов).
 

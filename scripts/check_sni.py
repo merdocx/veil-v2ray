@@ -45,8 +45,9 @@ DEFAULT_SNI = [
     "www.google.com",
     "www.github.com",
     "www.apple.com",
-    "speedtest.net",
+    "www.facebook.com",
     "www.adobe.com",
+    "www.instagram.com",
 ]
 
 

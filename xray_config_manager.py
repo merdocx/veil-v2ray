@@ -275,8 +275,9 @@ class XrayConfigManager:
                         "www.google.com",
                         "www.github.com",
                         "www.apple.com",
-                        "speedtest.net",
-                        "www.adobe.com"
+                        "www.facebook.com",
+                        "www.adobe.com",
+                        "www.instagram.com"
                     ],
                     "privateKey": reality_keys['private_key'],
                     "shortIds": short_ids,
