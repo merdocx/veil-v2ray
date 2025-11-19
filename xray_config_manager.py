@@ -397,6 +397,14 @@ class XrayConfigManager:
                 if inbound.get("tag") and inbound.get("tag") != "api"
             ]
             
+            # Создаем словарь существующих inbounds по UUID для сохранения их SNI
+            existing_inbounds_by_uuid = {}
+            for inbound in existing_inbounds:
+                tag = inbound.get("tag", "")
+                if tag.startswith("inbound-"):
+                    uuid_from_tag = tag.replace("inbound-", "")
+                    existing_inbounds_by_uuid[uuid_from_tag] = inbound
+            
             # Очищаем существующие inbounds (кроме API)
             config["inbounds"] = [
                 inbound for inbound in config["inbounds"]
@@ -408,11 +416,30 @@ class XrayConfigManager:
             # Добавляем inbounds для каждого ключа
             for key in keys:
                 if key.get("is_active", True):
-                    inbound = self.create_inbound_for_key(
-                        key["uuid"],
-                        key["name"],
-                        key.get("short_id")
-                    )
+                    uuid = key["uuid"]
+                    # Проверяем, есть ли уже inbound для этого ключа
+                    existing_inbound = existing_inbounds_by_uuid.get(uuid)
+                    
+                    if existing_inbound:
+                        # Сохраняем существующий inbound с его оригинальными SNI
+                        inbound = existing_inbound.copy()
+                        # Обновляем только необходимые поля (port, short_id если изменился)
+                        inbound["port"] = port_manager.get_port_for_key(uuid)
+                        if key.get("short_id"):
+                            reality_settings = inbound.get("streamSettings", {}).get("realitySettings", {})
+                            if reality_settings:
+                                # Обновляем shortIds только если они изменились
+                                current_short_ids = reality_settings.get("shortIds", [])
+                                if key.get("short_id") not in current_short_ids:
+                                    reality_settings["shortIds"] = [key.get("short_id")]
+                    else:
+                        # Новый ключ - создаем inbound с новым списком SNI
+                        inbound = self.create_inbound_for_key(
+                            uuid,
+                            key["name"],
+                            key.get("short_id")
+                        )
+                    
                     if inbound:
                         new_inbounds.append(inbound)
                         config["inbounds"].append(inbound)
