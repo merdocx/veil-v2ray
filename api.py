@@ -272,7 +272,7 @@ async def health_check():
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": "2.2.0",
+            "version": "2.2.5",
             "services": {
                 "xray": xray_status,
                 "api": api_status,
