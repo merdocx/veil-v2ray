@@ -54,7 +54,7 @@ except ImportError:
     XRAY_STATS_AVAILABLE = False
     logging.warning("xray_stats_reader недоступен, используется fallback")
 
-app = FastAPI(title="VPN Key Management API", version="2.3.3")
+app = FastAPI(title="VPN Key Management API", version="2.3.4")
 
 # Настройка rate limiting с расширенными правилами
 # Белый список IP для исключения из rate limiting (бот)
@@ -287,11 +287,11 @@ def verify_reality_settings():
 
 @app.get("/")
 async def root():
-    return {"message": "VPN Key Management API", "version": "2.3.3", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.3.4", "status": "running"}
 
 @app.get("/api/")
 async def api_root():
-    return {"message": "VPN Key Management API", "version": "2.3.3", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.3.4", "status": "running"}
 
 @app.get("/health")
 async def health_check():
@@ -312,7 +312,7 @@ async def health_check():
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": "2.3.3",
+            "version": "2.3.4",
             "services": {
                 "xray": xray_status,
                 "api": api_status,

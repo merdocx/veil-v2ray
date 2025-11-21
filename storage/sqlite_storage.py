@@ -57,6 +57,8 @@ class SQLiteStorage:
         with self._connect() as conn:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute("PRAGMA synchronous=NORMAL;")
+            conn.execute("PRAGMA busy_timeout=5000;")  # 5 секунд для обработки конкурентных запросов
+            conn.execute("PRAGMA cache_size=-32000;")  # 128MB кэш для 100 пользователей
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS keys (

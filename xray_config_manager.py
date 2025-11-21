@@ -97,7 +97,7 @@ class XrayConfigManager:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=15  # Увеличено до 15 секунд для стабильности при высокой нагрузке
             )
             if result.returncode != 0:
                 stderr = (result.stderr or "").strip()
