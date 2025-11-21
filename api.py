@@ -272,11 +272,11 @@ def verify_reality_settings():
 
 @app.get("/")
 async def root():
-    return {"message": "VPN Key Management API", "version": "2.2.9", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.3.1", "status": "running"}
 
 @app.get("/api/")
 async def api_root():
-    return {"message": "VPN Key Management API", "version": "2.2.9", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.3.1", "status": "running"}
 
 @app.get("/health")
 async def health_check():
