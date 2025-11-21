@@ -234,18 +234,16 @@ class XrayConfigManager:
             print("Error: Centralized Reality keys not found")
             return None
 
-        # Определяем набор shortIds
+        # Используем индивидуальный short_id для каждого ключа (для разделения пользователей)
+        # Если short_id передан - используем его, иначе fallback на централизованный
         if short_id:
-            short_ids = [short_id]
+            short_ids = [short_id]  # Индивидуальный short_id для ключа
         elif reality_keys.get('short_id'):
-            short_ids = [reality_keys['short_id']]
+            short_ids = [reality_keys['short_id']]  # Fallback на централизованный
         else:
-            short_ids = [
-                "2680beb40ea2fde0",
-                "2bc4128aa76f2b7a",
-                "c3fc1008549269da",
-                "c39576010e746754"
-            ]
+            # Последний fallback
+            print("WARNING: No short_id provided and centralized short_id not found")
+            short_ids = ["2680beb40ea2fde0"]
         
         # Создаем inbound конфигурацию с централизованными ключами
         inbound = {
@@ -313,9 +311,13 @@ class XrayConfigManager:
                 print("Warning: Reality private key mismatch, correcting...")
                 inbound['streamSettings']['realitySettings']['privateKey'] = reality_keys.get('private_key')
             
-            if inbound.get('streamSettings', {}).get('realitySettings', {}).get('shortIds', [None])[0] != reality_keys.get('short_id'):
-                print("Warning: Reality short ID mismatch, correcting...")
-                inbound['streamSettings']['realitySettings']['shortIds'] = [reality_keys.get('short_id')]
+            # ВАЖНО: НЕ перезаписываем short_id, если он был передан (индивидуальный для ключа)
+            # short_id должен соответствовать переданному параметру или значению из БД
+            if short_id:
+                current_short_id = inbound.get('streamSettings', {}).get('realitySettings', {}).get('shortIds', [None])[0]
+                if current_short_id != short_id:
+                    print(f"Warning: Reality short ID mismatch (expected {short_id}, got {current_short_id}), correcting...")
+                    inbound['streamSettings']['realitySettings']['shortIds'] = [short_id]
             
             # Добавляем inbound в конфигурацию
             config["inbounds"].append(inbound)
@@ -425,31 +427,33 @@ class XrayConfigManager:
                     if existing_inbound:
                         # Сохраняем существующий inbound с его оригинальными SNI
                         inbound = existing_inbound.copy()
-                        # Обновляем только необходимые поля (port, Reality ключи из keys.env)
+                        # Обновляем только необходимые поля (port, Reality ключи)
                         # Получаем порт из SQLite через storage
                         from storage.sqlite_storage import storage
                         inbound["port"] = storage.get_port_for_uuid(uuid)
                         
-                        # ВАЖНО: Всегда используем централизованные Reality ключи из keys.env
-                        # Игнорируем short_id из БД, так как он может быть устаревшим
+                        # ВАЖНО: Используем индивидуальный short_id из БД для каждого ключа
                         reality_keys = self._load_reality_keys()
                         reality_settings = inbound.get("streamSettings", {}).get("realitySettings", {})
                         if reality_settings:
-                            # Обновляем privateKey из keys.env
+                            # Обновляем privateKey из keys.env (централизованный)
                             if reality_keys.get('private_key'):
                                 reality_settings['privateKey'] = reality_keys['private_key']
-                            # Обновляем shortIds из keys.env (централизованный ключ)
-                            if reality_keys.get('short_id'):
-                                reality_settings['shortIds'] = [reality_keys['short_id']]
+                            # Обновляем shortIds - используем индивидуальный short_id из БД
+                            individual_short_id = key.get("short_id")
+                            if individual_short_id:
+                                reality_settings['shortIds'] = [individual_short_id]  # Индивидуальный для ключа
+                            elif reality_keys.get('short_id'):
+                                reality_settings['shortIds'] = [reality_keys['short_id']]  # Fallback на централизованный
                             # Обновляем publicKey из keys.env (если есть)
                             if reality_keys.get('public_key'):
                                 reality_settings['publicKey'] = reality_keys['public_key']
                     else:
-                        # Новый ключ - создаем inbound с новым списком SNI
+                        # Новый ключ - создаем inbound с индивидуальным short_id из БД
                         inbound = self.create_inbound_for_key(
                             uuid,
                             key["name"],
-                            key.get("short_id")
+                            key.get("short_id")  # Используем индивидуальный short_id из БД
                         )
                     
                     if inbound:
@@ -509,17 +513,20 @@ class XrayConfigManager:
             return {"status": "error", "message": str(e)}
     
     def fix_reality_keys_in_config(self) -> bool:
-        """Исправление Reality ключей во всех inbound'ах конфигурации"""
+        """Исправление Reality ключей в конфигурации Xray (только приватный ключ, short_id синхронизируется из БД)"""
         try:
             config = self._load_config()
             if not config:
                 return False
             
-            # Загружаем централизованные Reality ключи
             reality_keys = self._load_reality_keys()
-            if not reality_keys.get('private_key') or not reality_keys.get('short_id'):
-                print("Error: Centralized Reality keys not found")
+            if not reality_keys.get('private_key'):
+                print("Error: Centralized Reality private key not found")
                 return False
+            
+            # Загружаем ключи из БД для проверки индивидуальных short_id
+            from storage.sqlite_storage import storage
+            db_keys = {key["uuid"]: key for key in storage.get_all_keys()}
             
             fixed_count = 0
             for inbound in config.get("inbounds", []):
@@ -528,22 +535,34 @@ class XrayConfigManager:
                     
                     reality_settings = inbound["streamSettings"]["realitySettings"]
                     
-                    # Исправляем приватный ключ
+                    # Исправляем приватный ключ (всегда централизованный)
                     if reality_settings.get("privateKey") != reality_keys['private_key']:
                         reality_settings["privateKey"] = reality_keys['private_key']
                         fixed_count += 1
                         print(f"Fixed private key for inbound {inbound.get('tag', 'unknown')}")
                     
-                    # Исправляем Short ID только при отсутствии или использовании центрального значения
-                    short_ids = reality_settings.get("shortIds", [])
-                    if not short_ids:
-                        reality_settings["shortIds"] = [reality_keys['short_id']]
-                        fixed_count += 1
-                        print(f"Filled missing short ID for inbound {inbound.get('tag', 'unknown')}")
-                    elif reality_keys['short_id'] in short_ids and short_ids != [reality_keys['short_id']]:
-                        reality_settings["shortIds"] = [reality_keys['short_id']]
-                        fixed_count += 1
-                        print(f"Normalized central short ID for inbound {inbound.get('tag', 'unknown')}")
+                    # Исправляем Short ID на основе данных из БД
+                    tag = inbound.get("tag", "")
+                    if tag.startswith("inbound-"):
+                        uuid_from_tag = tag.replace("inbound-", "")
+                        db_key = db_keys.get(uuid_from_tag)
+                        
+                        if db_key and db_key.get("short_id"):
+                            # Используем индивидуальный short_id из БД
+                            expected_short_id = db_key["short_id"]
+                            current_short_ids = reality_settings.get("shortIds", [])
+                            current_short_id = current_short_ids[0] if current_short_ids else None
+                            
+                            if current_short_id != expected_short_id:
+                                reality_settings["shortIds"] = [expected_short_id]
+                                fixed_count += 1
+                                print(f"Fixed short ID for inbound {tag} (UUID: {uuid_from_tag[:8]}...): {current_short_id} -> {expected_short_id}")
+                        elif not reality_settings.get("shortIds"):
+                            # Fallback на централизованный, если нет в БД
+                            if reality_keys.get('short_id'):
+                                reality_settings["shortIds"] = [reality_keys['short_id']]
+                                fixed_count += 1
+                                print(f"Filled missing short ID for inbound {tag} with centralized value")
             
             if fixed_count > 0:
                 print(f"Fixed Reality keys in {fixed_count} inbound(s)")
@@ -554,10 +573,12 @@ class XrayConfigManager:
                 
         except Exception as e:
             print(f"Error fixing Reality keys: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def validate_config_sync(self, keys: List[Dict]) -> Dict:
-        """Валидация синхронизации конфигурации"""
+        """Валидация синхронизации конфигурации (включая проверку short_id)"""
         try:
             config = self._load_config()
             if not config:
@@ -568,25 +589,128 @@ class XrayConfigManager:
             
             # Получаем UUID из config.json
             config_uuids = set()
+            config_inbounds_by_uuid = {}
             for inbound in config.get("inbounds", []):
                 if inbound.get("protocol") == "vless":
                     for client in inbound.get("settings", {}).get("clients", []):
-                        config_uuids.add(client.get("id"))
+                        client_uuid = client.get("id")
+                        config_uuids.add(client_uuid)
+                        config_inbounds_by_uuid[client_uuid] = inbound
             
-            # Проверяем соответствие
-            synced = key_uuids == config_uuids
+            # Проверяем соответствие UUID
+            uuid_synced = key_uuids == config_uuids
+            
+            # Проверяем соответствие short_id между БД и конфигурацией
+            short_id_mismatches = []
+            for key in keys:
+                uuid = key["uuid"]
+                db_short_id = key.get("short_id")
+                inbound = config_inbounds_by_uuid.get(uuid)
+                
+                if inbound:
+                    config_short_ids = inbound.get("streamSettings", {}).get("realitySettings", {}).get("shortIds", [])
+                    config_short_id = config_short_ids[0] if config_short_ids else None
+                    
+                    if db_short_id and config_short_id != db_short_id:
+                        short_id_mismatches.append({
+                            "uuid": uuid,
+                            "name": key.get("name", "unknown"),
+                            "db_short_id": db_short_id,
+                            "config_short_id": config_short_id
+                        })
+            
+            synced = uuid_synced and len(short_id_mismatches) == 0
             
             return {
                 "synced": synced,
+                "uuid_synced": uuid_synced,
+                "short_id_synced": len(short_id_mismatches) == 0,
                 "keys_count": len(key_uuids),
                 "config_count": len(config_uuids),
                 "missing_in_config": list(key_uuids - config_uuids),
-                "extra_in_config": list(config_uuids - key_uuids)
+                "extra_in_config": list(config_uuids - key_uuids),
+                "short_id_mismatches": short_id_mismatches,
+                "short_id_mismatches_count": len(short_id_mismatches)
             }
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return {"synced": False, "error": str(e)}
-
+    
+    def sync_short_ids_from_db(self) -> Dict:
+        """Синхронизация short_id из БД в конфигурацию Xray"""
+        try:
+            config = self._load_config()
+            if not config:
+                return {"success": False, "error": "Config not found"}
+            
+            # Загружаем ключи из БД
+            from storage.sqlite_storage import storage
+            db_keys = {key["uuid"]: key for key in storage.get_all_keys()}
+            
+            reality_keys = self._load_reality_keys()
+            fixed_count = 0
+            fixed_keys = []
+            
+            for inbound in config.get("inbounds", []):
+                if (inbound.get("protocol") == "vless" and 
+                    inbound.get("streamSettings", {}).get("security") == "reality"):
+                    
+                    tag = inbound.get("tag", "")
+                    if tag.startswith("inbound-"):
+                        uuid_from_tag = tag.replace("inbound-", "")
+                        db_key = db_keys.get(uuid_from_tag)
+                        
+                        if db_key:
+                            reality_settings = inbound["streamSettings"]["realitySettings"]
+                            db_short_id = db_key.get("short_id")
+                            current_short_ids = reality_settings.get("shortIds", [])
+                            current_short_id = current_short_ids[0] if current_short_ids else None
+                            
+                            if db_short_id:
+                                # Используем индивидуальный short_id из БД
+                                if current_short_id != db_short_id:
+                                    reality_settings["shortIds"] = [db_short_id]
+                                    fixed_count += 1
+                                    fixed_keys.append({
+                                        "uuid": uuid_from_tag,
+                                        "name": db_key.get("name", "unknown"),
+                                        "old_short_id": current_short_id,
+                                        "new_short_id": db_short_id
+                                    })
+                            elif not current_short_ids and reality_keys.get('short_id'):
+                                # Fallback на централизованный, если нет в БД
+                                reality_settings["shortIds"] = [reality_keys['short_id']]
+                                fixed_count += 1
+                                fixed_keys.append({
+                                    "uuid": uuid_from_tag,
+                                    "name": db_key.get("name", "unknown"),
+                                    "old_short_id": None,
+                                    "new_short_id": reality_keys['short_id']
+                                })
+            
+            if fixed_count > 0:
+                if self._save_config(config):
+                    return {
+                        "success": True,
+                        "fixed_count": fixed_count,
+                        "fixed_keys": fixed_keys
+                    }
+                else:
+                    return {"success": False, "error": "Failed to save config"}
+            else:
+                return {
+                    "success": True,
+                    "fixed_count": 0,
+                    "message": "All short_ids are already synchronized"
+                }
+                
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return {"success": False, "error": str(e)}
+    
 # Глобальный экземпляр менеджера конфигурации
 xray_config_manager = XrayConfigManager()
 
@@ -614,3 +738,7 @@ def validate_xray_config_sync(keys: List[Dict]) -> Dict:
 def fix_reality_keys_in_xray_config() -> bool:
     """Исправление Reality ключей в конфигурации Xray"""
     return xray_config_manager.fix_reality_keys_in_config()
+
+def sync_short_ids_from_db() -> Dict:
+    """Синхронизация short_id из БД в конфигурацию Xray"""
+    return xray_config_manager.sync_short_ids_from_db()

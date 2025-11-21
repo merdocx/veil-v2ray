@@ -5,6 +5,7 @@ import os
 import time
 import logging
 import secrets
+import random
 from datetime import datetime
 from typing import List, Optional, Dict
 from functools import lru_cache
@@ -21,7 +22,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('/root/vpn-server/logs/error.log'),
+        logging.FileHandler('/root/vpn-server/logs/api.log'),
         logging.StreamHandler()
     ]
 )
@@ -43,7 +44,7 @@ load_env_file()
 
 # Импорт модулей для мониторинга
 from port_manager import port_manager, assign_port_for_key, release_port_for_key, get_port_for_key, get_all_port_assignments, reset_all_ports
-from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync, fix_reality_keys_in_xray_config
+from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync, fix_reality_keys_in_xray_config, sync_short_ids_from_db
 from simple_traffic_monitor import get_simple_uuid_traffic, get_simple_all_ports_traffic, reset_simple_uuid_traffic
 from traffic_history_manager import traffic_history
 from storage.sqlite_storage import storage
@@ -54,7 +55,7 @@ except ImportError:
     XRAY_STATS_AVAILABLE = False
     logging.warning("xray_stats_reader недоступен, используется fallback")
 
-app = FastAPI(title="VPN Key Management API", version="2.3.1")
+app = FastAPI(title="VPN Key Management API", version="2.3.2")
 
 # Настройка rate limiting с расширенными правилами
 # Белый список IP для исключения из rate limiting (бот)
@@ -239,10 +240,25 @@ def force_sync_xray_config():
         
         # Обновляем конфигурацию на основе SQLite
         # Используем update_xray_config_for_keys для правильной синхронизации
+        if not update_xray_config_for_keys(keys):
+            print("Warning: Failed to update Xray config for keys")
+            return False
+        
+        # Синхронизируем short_id из БД в конфигурацию
+        sync_result = sync_short_ids_from_db()
+        if sync_result.get("success"):
+            fixed_count = sync_result.get("fixed_count", 0)
+            if fixed_count > 0:
+                print(f"Synced {fixed_count} short_id(s) from database to Xray config")
+        else:
+            print(f"Warning: Failed to sync short_ids: {sync_result.get('error')}")
+        
         print("Xray configuration force-synchronized with SQLite")
         return True
     except Exception as e:
         print(f"Error force-syncing Xray config: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # Проверка и обновление настроек Reality
@@ -272,11 +288,11 @@ def verify_reality_settings():
 
 @app.get("/")
 async def root():
-    return {"message": "VPN Key Management API", "version": "2.3.1", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.3.2", "status": "running"}
 
 @app.get("/api/")
 async def api_root():
-    return {"message": "VPN Key Management API", "version": "2.3.1", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.3.2", "status": "running"}
 
 @app.get("/health")
 async def health_check():
@@ -297,7 +313,7 @@ async def health_check():
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": "2.3.1",
+            "version": "2.3.2",
             "services": {
                 "xray": xray_status,
                 "api": api_status,
@@ -335,15 +351,32 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
         # Генерация UUID для ключа
         key_uuid = str(uuid.uuid4())
 
-        # Генерация shortId для Reality (необходим только для новых ключей)
+        # Генерация индивидуального shortId для каждого ключа (для разделения пользователей)
         short_id = secrets.token_hex(8)
+        
+        # Выбор случайного SNI из доступных ServerNames (будет сохранен и использоваться постоянно)
+        import json
+        with open('/root/vpn-server/config/config.json', 'r') as f:
+            config = json.load(f)
+        # Находим первый vless inbound для получения списка ServerNames
+        server_names = []
+        for inbound in config.get('inbounds', []):
+            if inbound.get('protocol') == 'vless':
+                reality_settings = inbound.get('streamSettings', {}).get('realitySettings', {})
+                server_names = reality_settings.get('serverNames', [])
+                if server_names:
+                    break
+        if not server_names:
+            # Fallback на стандартный список
+            server_names = ['www.microsoft.com', 'www.cloudflare.com', 'www.google.com']
+        selected_sni = random.choice(server_names)  # Выбираем случайный SNI один раз при создании
         
         # Назначаем порт для ключа
         assigned_port = assign_port_for_key(key_uuid, str(uuid.uuid4()), key_request.name)
         if not assigned_port:
             raise HTTPException(status_code=500, detail="No available ports")
         
-        # Создание нового ключа
+        # Создание нового ключа с индивидуальным short_id и SNI
         new_key = {
             "id": str(uuid.uuid4()),
             "name": key_request.name,
@@ -351,16 +384,30 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
             "created_at": datetime.now().isoformat(),
             "is_active": True,
             "port": assigned_port,
-            "short_id": short_id
+            "short_id": short_id,  # Индивидуальный short_id для каждого ключа
+            "sni": selected_sni  # Случайно выбранный SNI, который будет использоваться постоянно
         }
         
         # Сохраняем ключ в хранилище
         storage.add_key(new_key)
         key_stored = True
         
-        # Добавляем ключ в конфигурацию Xray с индивидуальным портом
+        # Добавляем ключ в конфигурацию Xray с индивидуальным short_id
         if not add_key_to_xray_config(key_uuid, key_request.name, short_id):
             raise HTTPException(status_code=500, detail="Failed to add key to Xray config")
+        
+        # Проверяем синхронизацию short_id после создания
+        try:
+            # Перезагружаем ключ из БД для проверки
+            created_key = storage.get_key_by_uuid(key_uuid)
+            if created_key and created_key.get("short_id") != short_id:
+                print(f"Warning: Short ID mismatch after creation for key {key_uuid}")
+                # Исправляем несоответствие
+                sync_result = sync_short_ids_from_db()
+                if sync_result.get("success") and sync_result.get("fixed_count", 0) > 0:
+                    print(f"Fixed {sync_result.get('fixed_count')} short_id mismatch(es)")
+        except Exception as e:
+            print(f"Warning: Failed to verify short_id sync after key creation: {e}")
         
         # Инициализируем историю трафика для нового ключа
         try:
@@ -489,6 +536,7 @@ async def get_key_config(key_id: str, api_key: str = Depends(verify_api_key)):
             "client_config": vless_url,
             "vless_url": vless_url
         }
+        # Возвращаем short_id из БД для информации
         if key.get("short_id"):
             response["short_id"] = key["short_id"]
         
@@ -545,7 +593,7 @@ async def get_traffic_status(api_key: str = Depends(verify_api_key)):
 async def sync_xray_config(request: Request, api_key: str = Depends(verify_api_key)):
     """Принудительная синхронизация конфигурации Xray с SQLite"""
     try:
-        # Принудительная синхронизация
+        # Принудительная синхронизация (включая short_id)
         if not force_sync_xray_config():
             raise HTTPException(status_code=500, detail="Failed to sync configuration")
         
@@ -557,9 +605,14 @@ async def sync_xray_config(request: Request, api_key: str = Depends(verify_api_k
         if not verify_xray_config():
             raise HTTPException(status_code=500, detail="Configuration sync verification failed")
         
+        # Валидация синхронизации short_id
+        keys = load_keys()
+        validation = validate_xray_config_sync(keys)
+        
         return {
             "message": "Configuration synchronized successfully",
             "status": "synced",
+            "validation": validation,
             "timestamp": int(time.time())
         }
     except HTTPException:
@@ -723,6 +776,11 @@ async def sync_xray_config_endpoint(api_key: str = Depends(verify_api_key)):
     try:
         keys = load_keys()
         if update_xray_config_for_keys(keys):
+            # Синхронизируем short_id из БД в конфигурацию
+            sync_result = sync_short_ids_from_db()
+            if not sync_result.get("success"):
+                print(f"Warning: Failed to sync short_ids: {sync_result.get('error')}")
+            
             # Перезапуск Xray
             if not restart_xray():
                 raise HTTPException(status_code=500, detail="Failed to restart Xray service")
@@ -730,6 +788,7 @@ async def sync_xray_config_endpoint(api_key: str = Depends(verify_api_key)):
             return {
                 "message": "Xray configuration synchronized successfully",
                 "status": "synced",
+                "short_id_sync": sync_result,
                 "timestamp": int(time.time())
             }
         else:

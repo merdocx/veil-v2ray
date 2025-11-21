@@ -2,7 +2,6 @@
 import json
 import sys
 import os
-import random
 
 def generate_client_config(key_uuid, key_name, port=None):
     """Генерация конфигурации клиента для VLESS+Reality"""
@@ -34,10 +33,37 @@ def generate_client_config(key_uuid, key_name, port=None):
     # Извлечение параметров Reality из найденного inbound
     reality_settings = vless_inbound['streamSettings']['realitySettings']
     private_key = reality_settings['privateKey']
-    # Случайный выбор shortId и SNI для разнообразия (обратная совместимость сохранена)
-    short_id = random.choice(reality_settings['shortIds'])
+    
+    # Используем shortId из конфигурации Xray (индивидуальный для каждого ключа)
+    # Это гарантирует, что short_id в ссылке совпадает с конфигурацией Xray
+    short_ids = reality_settings.get('shortIds', [])
+    if not short_ids:
+        print("Ошибка: shortIds не найдены в конфигурации Reality")
+        sys.exit(1)
+    short_id = short_ids[0]  # Используем первый shortId из конфигурации (индивидуальный для ключа)
+    
     server_names = reality_settings['serverNames']
-    sni = random.choice(server_names)
+    
+    # Используем SNI из БД, если он сохранен (выбирался случайно при создании ключа)
+    # Если SNI нет в БД (старые ключи), используем первый из списка как fallback
+    from storage.sqlite_storage import storage
+    key_from_db = None
+    keys = storage.get_all_keys()
+    for k in keys:
+        if k.get('uuid') == key_uuid:
+            key_from_db = k
+            break
+    
+    if key_from_db and key_from_db.get('sni'):
+        # Используем сохраненный SNI из БД
+        sni = key_from_db.get('sni')
+        # Проверяем, что SNI есть в списке ServerNames
+        if sni not in server_names:
+            # Если сохраненный SNI не в списке, используем первый из списка
+            sni = server_names[0]
+    else:
+        # Для старых ключей без SNI используем первый из списка
+        sni = server_names[0]
     
     # Загрузка публичного ключа из keys.env
     public_key = None
@@ -54,8 +80,8 @@ def generate_client_config(key_uuid, key_name, port=None):
         print("Ошибка: не удалось найти публичный ключ")
         sys.exit(1)
     
-    # Получение IP сервера
-    server_ip = "146.103.100.14"  # Захардкоженный IP
+    # Получение домена сервера
+    server_ip = "veil-bird.ru"  # Домен сервера
     
     # Использование порта из inbound, если не указан
     if not port:

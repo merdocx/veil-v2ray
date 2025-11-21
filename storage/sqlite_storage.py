@@ -66,10 +66,16 @@ class SQLiteStorage:
                     created_at TEXT NOT NULL,
                     is_active INTEGER NOT NULL DEFAULT 1,
                     port INTEGER,
-                    short_id TEXT
+                    short_id TEXT,
+                    sni TEXT
                 )
                 """
             )
+            # Добавляем колонку sni если её нет (для существующих БД)
+            try:
+                conn.execute("ALTER TABLE keys ADD COLUMN sni TEXT")
+            except sqlite3.OperationalError:
+                pass  # Колонка уже существует
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS port_assignments (
@@ -197,6 +203,7 @@ class SQLiteStorage:
         return self._format_key(row) if row else None
 
     def add_key(self, key: Dict[str, Any], sync_json: bool = False):
+        # Сохраняем индивидуальный short_id и sni для каждого ключа
         record = (
             key["id"],
             key["name"],
@@ -204,14 +211,15 @@ class SQLiteStorage:
             key.get("created_at", datetime.now().isoformat()),
             1 if key.get("is_active", True) else 0,
             key.get("port"),
-            key.get("short_id"),
+            key.get("short_id"),  # Индивидуальный short_id для каждого ключа
+            key.get("sni"),  # SNI для каждого ключа (выбирается случайно при создании)
         )
         with self._lock:
             with self._connect() as conn:
                 conn.execute(
                     """
-                    INSERT INTO keys (id, name, uuid, created_at, is_active, port, short_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO keys (id, name, uuid, created_at, is_active, port, short_id, sni)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     record,
                 )
@@ -425,6 +433,14 @@ class SQLiteStorage:
     # ------------------------------------------------------------------
     @staticmethod
     def _format_key(row: sqlite3.Row) -> Dict[str, Any]:
+        # Проверяем наличие поля sni (может отсутствовать в старых БД)
+        sni = None
+        try:
+            if "sni" in row.keys():
+                sni = row["sni"]
+        except (KeyError, IndexError):
+            pass
+        
         return {
             "id": row["id"],
             "name": row["name"],
@@ -433,6 +449,7 @@ class SQLiteStorage:
             "is_active": bool(row["is_active"]),
             "port": row["port"],
             "short_id": row["short_id"],
+            "sni": sni,  # SNI может быть None для старых ключей
         }
 
 

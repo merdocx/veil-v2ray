@@ -24,3 +24,4 @@ fi
 
 echo "OK: integrity_check прошёл успешно"
 
+

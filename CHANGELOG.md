@@ -5,6 +5,32 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и проект следует [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [2.3.2] - 2025-11-21
+
+### Добавлено
+- Синхронизация short_id из базы данных в конфигурацию Xray
+- Индивидуальный short_id для каждого ключа (для разделения пользователей)
+- Автоматический выбор SNI для каждого нового ключа из доступных ServerNames
+- Функция `sync_short_ids_from_db()` для синхронизации short_id
+- Отчет о проверке прав доступа (`PERMISSIONS_CHECK_REPORT.md`)
+
+### Изменено
+- Разделение логов: `api.log` для API, `error.log` для Xray
+- Улучшена синхронизация конфигурации Xray с базой данных
+- Улучшена обработка Reality ключей при создании новых ключей
+- Оптимизирована работа с портами в шаблонах конфигурации
+
+### Исправлено
+- Исправлена синхронизация short_id между базой данных и конфигурацией Xray
+- Исправлены права доступа для операций с файлами логов
+- Улучшена целостность базы данных при проверке
+
+### Документация
+- Добавлен `SHORT_ID_ANALYSIS.md` - анализ системы short_id
+- Добавлен `SHORT_ID_SYNC_IMPLEMENTATION.md` - документация по синхронизации
+- Добавлен `SHORT_ID_FIX_COMPLETE.md` - отчет о исправлениях
+- Добавлен `PERMISSIONS_CHECK_REPORT.md` - отчет о проверке прав доступа
+
 ## [2.3.1] - 2025-11-21
 
 ### Добавлено
@@ -62,8 +88,10 @@
 
 ---
 
-[2.3.1]: https://github.com/your-repo/vpn-server/compare/v2.3.0...v2.3.1
+[2.3.2]: https://github.com/merdocx/veil-v2ray/compare/v2.3.1...v2.3.2
+[2.3.1]: https://github.com/merdocx/veil-v2ray/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/your-repo/vpn-server/compare/v2.2.9...v2.3.0
 [2.2.9]: https://github.com/your-repo/vpn-server/compare/v2.2.8...v2.2.9
 [2.2.8]: https://github.com/your-repo/vpn-server/compare/v2.2.7...v2.2.8
+
 
