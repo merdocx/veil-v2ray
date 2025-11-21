@@ -6,7 +6,6 @@
 
 import sys
 import os
-import json
 import logging
 from datetime import datetime
 
@@ -14,6 +13,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from traffic_history_manager import traffic_history
+from storage.sqlite_storage import storage
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,13 +26,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def load_keys():
-    """Загрузка ключей"""
-    keys_file = "/root/vpn-server/config/keys.json"
+    """Загрузка ключей из SQLite"""
     try:
-        with open(keys_file, 'r') as f:
-            return json.load(f)
+        return storage.get_all_keys()
     except Exception as e:
-        logger.error(f"Error loading keys: {e}")
+        logger.error(f"Error loading keys from SQLite: {e}")
         return []
 
 def main():

@@ -1,26 +1,21 @@
 #!/usr/bin/env python3
 """
-Пересоздание inbound'ов Xray на основе keys.json с использованием HandlerService.
+Пересоздание inbound'ов Xray на основе SQLite с использованием HandlerService.
 Запуск: python3 sync_inbounds.py
 """
 
-import json
-from pathlib import Path
+import sys
+import os
+
+# Добавляем путь к модулям
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from xray_config_manager import update_xray_config_for_keys
-
-KEYS_PATH = Path("/root/vpn-server/config/keys.json")
-
-
-def load_keys():
-    if not KEYS_PATH.exists():
-        return []
-    with KEYS_PATH.open("r", encoding="utf-8") as f:
-        return json.load(f)
+from storage.sqlite_storage import storage
 
 
 def main():
-    keys = load_keys()
+    keys = storage.get_all_keys()
     if update_xray_config_for_keys(keys):
         print(f"Synced {len(keys)} keys with Xray via HandlerService.")
     else:

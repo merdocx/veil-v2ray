@@ -1,11 +1,14 @@
 # Конфиденциальные данные
 config/keys.env
-config/keys.json
 config/config.json
-config/ports.json
-config/traffic_history.json
 data/
 .env
+
+# Старые JSON файлы (больше не используются)
+config/keys.json
+config/ports.json
+config/traffic_history.json
+config/*.json.old
 
 # Логи
 logs/

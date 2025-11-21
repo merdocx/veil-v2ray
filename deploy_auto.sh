@@ -180,18 +180,8 @@ cat > config/config.json << EOF
 }
 EOF
 
-# Инициализация файлов данных (JSON зеркала для SQLite)
-mkdir -p logs data
-echo '[]' > config/keys.json
-echo "{\"used_ports\": {}, \"port_assignments\": {}, \"created_at\": \"$(date -Iseconds)\", \"last_updated\": \"$(date -Iseconds)\"}" > config/ports.json
-cat > config/traffic_history.json <<EOF
-{
-  "version": "2.0",
-  "created_at": "$(date -Iseconds)",
-  "keys_history": {},
-  "last_update": "$(date -Iseconds)"
-}
-EOF
+# Инициализация директорий (SQLite создаст базу автоматически)
+mkdir -p logs data config/backups
 print_info "data/vpn.db будет создан автоматически при первом запуске API"
 
 # Шаг 7: Создание systemd сервисов

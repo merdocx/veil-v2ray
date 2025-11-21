@@ -426,7 +426,9 @@ class XrayConfigManager:
                         # Сохраняем существующий inbound с его оригинальными SNI
                         inbound = existing_inbound.copy()
                         # Обновляем только необходимые поля (port, short_id если изменился)
-                        inbound["port"] = port_manager.get_port_for_key(uuid)
+                        # Получаем порт из SQLite через storage
+                        from storage.sqlite_storage import storage
+                        inbound["port"] = storage.get_port_for_uuid(uuid)
                         if key.get("short_id"):
                             reality_settings = inbound.get("streamSettings", {}).get("realitySettings", {})
                             if reality_settings:
@@ -553,7 +555,7 @@ class XrayConfigManager:
             if not config:
                 return {"synced": False, "error": "Config not found"}
             
-            # Получаем UUID из keys.json
+            # Получаем UUID из SQLite (keys уже загружены из SQLite)
             key_uuids = {key["uuid"] for key in keys}
             
             # Получаем UUID из config.json

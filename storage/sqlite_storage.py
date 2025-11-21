@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
 Centralized SQLite storage for VPN server state (keys, ports, metadata).
-Keeps legacy JSON files (`config/keys.json`, `config/ports.json`) in sync so
-existing tooling and documentation remain valid while the API relies on SQLite
-for transactional safety.
+SQLite is the single source of truth - all data operations use SQLite directly.
 """
 
 import json
@@ -43,9 +41,7 @@ class SQLiteStorage:
         _ensure_parent(self.db_path)
         self._init_db()
         self._migrate_from_json()
-        self.export_keys_json()
-        self.export_ports_json()
-        self.export_traffic_history_json()
+        # JSON экспорт отключен - используем только SQLite
 
     @contextmanager
     def _connect(self):
@@ -200,7 +196,7 @@ class SQLiteStorage:
             ).fetchone()
         return self._format_key(row) if row else None
 
-    def add_key(self, key: Dict[str, Any], sync_json: bool = True):
+    def add_key(self, key: Dict[str, Any], sync_json: bool = False):
         record = (
             key["id"],
             key["name"],
@@ -219,14 +215,13 @@ class SQLiteStorage:
                     """,
                     record,
                 )
-            if sync_json:
-                self.export_keys_json()
+            # JSON экспорт отключен - используем только SQLite
 
     def delete_key_by_uuid(self, uuid: str):
         with self._lock:
             with self._connect() as conn:
                 conn.execute("DELETE FROM keys WHERE uuid = ?", (uuid,))
-            self.export_keys_json()
+            # JSON экспорт отключен - используем только SQLite
 
     def update_key_fields(self, uuid: str, **fields):
         if not fields:
@@ -242,7 +237,7 @@ class SQLiteStorage:
                 conn.execute(
                     f"UPDATE keys SET {', '.join(columns)} WHERE uuid = ?", values
                 )
-            self.export_keys_json()
+            # JSON экспорт отключен - используем только SQLite
 
     def export_keys_json(self):
         keys = self.get_all_keys()
@@ -286,7 +281,7 @@ class SQLiteStorage:
         key_name: str,
         port: int,
         assigned_at: Optional[str] = None,
-        sync_json: bool = True,
+        sync_json: bool = False,
     ):
         assigned_at = assigned_at or datetime.now().isoformat()
         record = (port, uuid, key_id, key_name, assigned_at, 1)
@@ -303,7 +298,7 @@ class SQLiteStorage:
             if sync_json:
                 self.export_ports_json()
 
-    def release_port_assignment(self, uuid: str, sync_json: bool = True) -> bool:
+    def release_port_assignment(self, uuid: str, sync_json: bool = False) -> bool:
         with self._lock:
             with self._connect() as conn:
                 cursor = conn.execute(
@@ -313,7 +308,7 @@ class SQLiteStorage:
                 self.export_ports_json()
             return cursor.rowcount > 0
 
-    def reset_ports(self, sync_json: bool = True) -> bool:
+    def reset_ports(self, sync_json: bool = False) -> bool:
         with self._lock:
             with self._connect() as conn:
                 conn.execute("DELETE FROM port_assignments")
@@ -386,7 +381,7 @@ class SQLiteStorage:
         self,
         key_uuid: str,
         entry: Dict[str, Any],
-        sync_json: bool = True,
+        sync_json: bool = False,
     ):
         now = datetime.now().isoformat()
         payload = json.dumps(entry, ensure_ascii=False)
@@ -405,7 +400,7 @@ class SQLiteStorage:
             if sync_json:
                 self.export_traffic_history_json()
 
-    def reset_traffic_history_entry(self, key_uuid: str, sync_json: bool = True) -> bool:
+    def reset_traffic_history_entry(self, key_uuid: str, sync_json: bool = False) -> bool:
         with self._lock:
             with self._connect() as conn:
                 cursor = conn.execute(

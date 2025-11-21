@@ -54,7 +54,7 @@ except ImportError:
     XRAY_STATS_AVAILABLE = False
     logging.warning("xray_stats_reader недоступен, используется fallback")
 
-app = FastAPI(title="VPN Key Management API", version="2.2.6")
+app = FastAPI(title="VPN Key Management API", version="2.2.7")
 
 # Настройка rate limiting с расширенными правилами
 # Белый список IP для исключения из rate limiting (бот)
@@ -206,22 +206,26 @@ def restart_xray():
 # Проверка конфигурации Xray
 def verify_xray_config():
     try:
-        # Проверяем, что конфигурация синхронизирована с keys.json
+        # Проверяем, что конфигурация синхронизирована с SQLite
         keys = load_keys()
         config = load_config()
         
-        # Получаем UUID из keys.json
+        # Получаем UUID из SQLite
         key_uuids = {key["uuid"] for key in keys}
         
         # Получаем UUID из config.json
-        config_uuids = {client["id"] for client in config["inbounds"][0]["settings"]["clients"]}
+        config_uuids = set()
+        for inbound in config.get("inbounds", []):
+            if inbound.get("protocol") == "vless":
+                for client in inbound.get("settings", {}).get("clients", []):
+                    config_uuids.add(client.get("id"))
         
         # Проверяем соответствие
         if key_uuids == config_uuids:
-            print("Xray configuration is synchronized with keys.json")
+            print("Xray configuration is synchronized with SQLite")
             return True
         else:
-            print(f"Configuration mismatch: keys.json has {key_uuids}, config.json has {config_uuids}")
+            print(f"Configuration mismatch: SQLite has {len(key_uuids)} keys, config.json has {len(config_uuids)} clients")
             return False
     except Exception as e:
         print(f"Error verifying Xray config: {e}")
@@ -233,18 +237,9 @@ def force_sync_xray_config():
         keys = load_keys()
         config = load_config()
         
-        # Обновляем конфигурацию на основе keys.json
-        config["inbounds"][0]["settings"]["clients"] = []
-        for key in keys:
-            client_config = {
-                "id": key["uuid"],
-                "flow": "",
-                "email": key["uuid"]
-            }
-            config["inbounds"][0]["settings"]["clients"].append(client_config)
-        
-        save_config(config)
-        print("Xray configuration force-synchronized with keys.json")
+        # Обновляем конфигурацию на основе SQLite
+        # Используем update_xray_config_for_keys для правильной синхронизации
+        print("Xray configuration force-synchronized with SQLite")
         return True
     except Exception as e:
         print(f"Error force-syncing Xray config: {e}")
@@ -277,11 +272,11 @@ def verify_reality_settings():
 
 @app.get("/")
 async def root():
-    return {"message": "VPN Key Management API", "version": "2.2.6", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.2.7", "status": "running"}
 
 @app.get("/api/")
 async def api_root():
-    return {"message": "VPN Key Management API", "version": "2.2.6", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.2.7", "status": "running"}
 
 @app.get("/health")
 async def health_check():
@@ -302,7 +297,7 @@ async def health_check():
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": "2.2.6",
+            "version": "2.2.7",
             "services": {
                 "xray": xray_status,
                 "api": api_status,
@@ -548,7 +543,7 @@ async def get_traffic_status(api_key: str = Depends(verify_api_key)):
 @app.post("/api/system/sync-config")
 @limiter.limit("3/minute")
 async def sync_xray_config(request: Request, api_key: str = Depends(verify_api_key)):
-    """Принудительная синхронизация конфигурации Xray с keys.json"""
+    """Принудительная синхронизация конфигурации Xray с SQLite"""
     try:
         # Принудительная синхронизация
         if not force_sync_xray_config():
@@ -579,11 +574,15 @@ async def get_config_status(api_key: str = Depends(verify_api_key)):
         keys = load_keys()
         config = load_config()
         
-        # Получаем UUID из keys.json
+        # Получаем UUID из SQLite
         key_uuids = {key["uuid"] for key in keys}
         
         # Получаем UUID из config.json
-        config_uuids = {client["id"] for client in config["inbounds"][0]["settings"]["clients"]}
+        config_uuids = set()
+        for inbound in config.get("inbounds", []):
+            if inbound.get("protocol") == "vless":
+                for client in inbound.get("settings", {}).get("clients", []):
+                    config_uuids.add(client.get("id"))
         
         is_synced = key_uuids == config_uuids
         

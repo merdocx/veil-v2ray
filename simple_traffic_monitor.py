@@ -7,8 +7,15 @@ import subprocess
 import json
 import time
 import re
+import sys
+import os
 from typing import Dict, List, Optional
 from datetime import datetime
+
+# Добавляем путь к модулям
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from storage.sqlite_storage import storage
 
 class SimpleTrafficMonitor:
     def __init__(self):
@@ -229,16 +236,10 @@ class SimpleTrafficMonitor:
         return result
     
     def get_uuid_traffic(self, uuid: str) -> Dict:
-        """Получение трафика для UUID (находит порт по UUID)"""
+        """Получение трафика для UUID (находит порт по UUID из SQLite)"""
         try:
-            # Загружаем конфигурацию портов
-            with open('/root/vpn-server/config/ports.json', 'r') as f:
-                ports_data = json.load(f)
-            
-            # Ищем порт для UUID в port_assignments
-            port = None
-            if 'port_assignments' in ports_data and uuid in ports_data['port_assignments']:
-                port = ports_data['port_assignments'][uuid].get('port')
+            # Получаем порт для UUID из SQLite
+            port = storage.get_port_for_uuid(uuid)
             
             if port is None:
                 return {
@@ -267,11 +268,10 @@ class SimpleTrafficMonitor:
             }
     
     def get_all_ports_traffic(self) -> Dict:
-        """Получение трафика для всех портов"""
+        """Получение трафика для всех портов из SQLite"""
         try:
-            # Загружаем конфигурацию портов
-            with open('/root/vpn-server/config/ports.json', 'r') as f:
-                ports_data = json.load(f)
+            # Получаем все назначения портов из SQLite
+            used_ports = storage.get_used_ports()
             
             all_traffic = {
                 "ports": {},
@@ -280,16 +280,15 @@ class SimpleTrafficMonitor:
                 "timestamp": time.time()
             }
             
-            # Обрабатываем port_assignments
-            if 'port_assignments' in ports_data:
-                for uuid, assignment in ports_data['port_assignments'].items():
-                    port = assignment.get('port')
-                    if port:
-                        port_traffic = self.get_port_traffic(port)
-                        port_traffic["uuid"] = uuid
-                        all_traffic["ports"][str(port)] = port_traffic
-                        all_traffic["total_connections"] += port_traffic["connections"]
-                        all_traffic["total_bytes"] += port_traffic["total_bytes"]
+            # Обрабатываем все активные порты
+            for port, assignment in used_ports.items():
+                if assignment.get('is_active', True):
+                    uuid = assignment.get('uuid')
+                    port_traffic = self.get_port_traffic(port)
+                    port_traffic["uuid"] = uuid
+                    all_traffic["ports"][str(port)] = port_traffic
+                    all_traffic["total_connections"] += port_traffic["connections"]
+                    all_traffic["total_bytes"] += port_traffic["total_bytes"]
             
             return all_traffic
             
@@ -323,14 +322,11 @@ class SimpleTrafficMonitor:
     def reset_uuid_traffic(self, uuid: str) -> bool:
         """Сброс статистики для UUID"""
         try:
-            # Находим порт для UUID
-            with open('/root/vpn-server/config/ports.json', 'r') as f:
-                ports_data = json.load(f)
+            # Получаем порт для UUID из SQLite
+            port = storage.get_port_for_uuid(uuid)
             
-            if 'port_assignments' in ports_data and uuid in ports_data['port_assignments']:
-                port = ports_data['port_assignments'][uuid].get('port')
-                if port:
-                    return self.reset_port_traffic(port)
+            if port:
+                return self.reset_port_traffic(port)
             
             return False
             

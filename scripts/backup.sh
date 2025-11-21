@@ -37,9 +37,6 @@ if [[ -f "$PROJECT_ROOT/data/vpn.db" ]]; then
 fi
 
 declare -a INCLUDE_PATHS=(
-    "config/keys.json"
-    "config/ports.json"
-    "config/traffic_history.json"
     "data/vpn.db"
     "config/keys.env"
     ".env"

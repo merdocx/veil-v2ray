@@ -149,15 +149,8 @@ def check_ports():
             all_keys = sqlite_storage.storage.get_all_keys()
             expected_ports = len([k for k in all_keys if k.get('is_active', True)])
         except Exception as e:
-            logger.warning(f"Failed to get keys count from SQLite: {e}, falling back to JSON")
-            # Fallback на JSON если SQLite недоступен
-            keys_file = '/root/vpn-server/config/keys.json'
-            if os.path.exists(keys_file):
-                with open(keys_file, 'r') as f:
-                    keys = json.load(f)
-                expected_ports = len([k for k in keys if k.get('is_active', True)])
-            else:
-                expected_ports = 0
+            logger.error(f"Failed to get keys count from SQLite: {e}")
+            expected_ports = 0
         
         # Считаем открытые VPN порты
         vpn_ports_count = 0
