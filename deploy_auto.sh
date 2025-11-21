@@ -54,7 +54,7 @@ apt update && apt upgrade -y
 
 # Шаг 2: Установка зависимостей
 print_info "Установка зависимостей..."
-apt install -y curl wget git python3 python3-pip python3-venv nginx unzip openssl
+apt install -y curl wget git python3 python3-pip python3-venv nginx unzip openssl sqlite3
 
 # Шаг 3: Создание директории проекта
 print_info "Создание директории проекта..."

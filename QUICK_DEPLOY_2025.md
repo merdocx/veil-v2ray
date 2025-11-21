@@ -24,8 +24,9 @@ sudo ./deploy.sh
 sudo apt update && sudo apt upgrade -y
 
 # Установка зависимостей
-sudo apt install -y curl wget git python3 python3-pip python3-venv nginx unzip openssl
+sudo apt install -y curl wget git python3 python3-pip python3-venv nginx unzip openssl sqlite3
 ```
+**Примечание:** `sqlite3` необходим для проверки целостности базы данных. Python модуль `sqlite3` входит в стандартную библиотеку Python 3.
 
 #### **Шаг 2: Установка Xray v25.10.15**
 ```bash
@@ -112,9 +113,12 @@ EOF
 
 # Инициализация директорий (SQLite создаст базу автоматически)
 mkdir -p logs data config/backups
-mkdir -p logs data
-# Файл data/vpn.db будет создан автоматически при первом запуске API
-# При необходимости проверяйте целостность через scripts/check_db_integrity.sh
+
+# Важно: Файл data/vpn.db будет создан автоматически при первом запуске API
+# SQLite является единственным хранилищем данных (ключи, порты, история трафика)
+# Если есть старые JSON-файлы (keys.json, ports.json, traffic_history.json), 
+# они будут автоматически импортированы в SQLite при первом запуске API
+# Для проверки целостности базы используйте: scripts/check_db_integrity.sh
 
 #### **Шаг 6.1: Настройка пользователя службы**
 ```bash

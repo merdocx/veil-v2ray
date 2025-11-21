@@ -39,11 +39,12 @@ sudo yum update -y
 ### **1.2 Установка необходимых пакетов**
 ```bash
 # Ubuntu/Debian
-sudo apt install -y curl wget git python3 python3-pip python3-venv nginx unzip
+sudo apt install -y curl wget git python3 python3-pip python3-venv nginx unzip sqlite3
 
 # CentOS/RHEL
-sudo yum install -y curl wget git python3 python3-pip nginx unzip
+sudo yum install -y curl wget git python3 python3-pip nginx unzip sqlite
 ```
+**Примечание:** `sqlite3` необходим для проверки целостности базы данных через `scripts/check_db_integrity.sh`. Python модуль `sqlite3` входит в стандартную библиотеку Python 3.
 
 ### **1.3 Создание пользователя (опционально)**
 ```bash
@@ -215,8 +216,12 @@ sudo chmod 644 /etc/ssl/certs/vpn-api.crt
 - Рабочие файлы (`config.json`, `keys.env`, `data/vpn.db`) добавлены в `.gitignore` и не должны попадать в репозиторий.
 - Отредактируйте `config/config.json`, если требуется поменять DNS или поведение API.
 - `config/keys.env` должен содержать Reality ключи (см. Шаг 6) и используется HandlerService для выдачи inbound'ов без перезапуска.
-- `data/vpn.db` создаётся автоматически при первом запуске API и является единственным хранилищем данных (ключи, порты, история трафика).
-- Для проверки целостности базы используйте `./scripts/check_db_integrity.sh` (нужен `sqlite3`).
+- **`data/vpn.db`** — SQLite база данных, создаётся автоматически при первом запуске API и является **единственным хранилищем данных** (ключи, порты, история трафика).
+- **Важно:** В версии 2.2.7+ полностью удалена поддержка JSON-файлов. Все данные хранятся только в SQLite.
+- При первом запуске API автоматически создаст базу данных и таблицы (`keys`, `port_assignments`, `traffic_history`, `metadata`).
+- Если на сервере есть старые JSON-файлы (`config/keys.json`, `config/ports.json`, `config/traffic_history.json`), они будут автоматически импортированы в SQLite при первом запуске API (миграция выполняется один раз).
+- Для проверки целостности базы используйте `./scripts/check_db_integrity.sh` (требуется установленный `sqlite3`).
+- Для просмотра данных используйте `sqlite3 data/vpn.db` или API endpoints.
 
 ### **5.4 Инициализация файлов данных**
 - После копирования шаблонов дополнительно создайте директорию для логов:
