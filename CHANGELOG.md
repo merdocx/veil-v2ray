@@ -5,6 +5,32 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и проект следует [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [2.3.3] - 2025-11-21
+
+### Изменено
+- Упрощена система мониторинга трафика - удален резервный метод `simple_traffic_monitor.py`
+- Упрощен API трафика - оставлены только 2 эндпоинта:
+  - `GET /api/keys/{key_id}/traffic` - получение накопительного трафика
+  - `POST /api/keys/{key_id}/traffic/reset` - обнуление накопительного трафика
+- Удалены устаревшие эндпоинты трафика (simple, history, monthly, daily, status)
+- Улучшена работа с трафиком - используется только Xray Stats API
+
+### Удалено
+- `simple_traffic_monitor.py` - резервный метод мониторинга трафика (не используется)
+- 29 устаревших MD файлов (отчеты о решенных проблемах, исторические анализы)
+- 3 старых JSON файла (.old) после миграции на SQLite
+- 3 неиспользуемых shell скрипта
+
+### Документация
+- Обновлена `API_DOCUMENTATION.md` - актуализирована под текущее состояние API
+- Обновлена `API_QUICK_REFERENCE.md` - упрощена справка по API
+- Добавлен `UNUSED_FILES_ANALYSIS.md` - анализ неиспользуемых файлов
+
+### Очистка проекта
+- Удалено 35 устаревших файлов
+- Проект очищен от исторических отчетов и неиспользуемого кода
+- Все удаленные файлы сохранены в архиве `archive/unused_files_*.tar.gz`
+
 ## [2.3.2] - 2025-11-21
 
 ### Добавлено
@@ -88,6 +114,7 @@
 
 ---
 
+[2.3.3]: https://github.com/merdocx/veil-v2ray/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/merdocx/veil-v2ray/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/merdocx/veil-v2ray/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/your-repo/vpn-server/compare/v2.2.9...v2.3.0

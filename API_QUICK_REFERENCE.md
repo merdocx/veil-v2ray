@@ -1,45 +1,60 @@
 # API Quick Reference
 
+## Версия API: 2.3.3
+
 ## Основные эндпоинты
 
+### Информационные (без аутентификации)
+- `GET /` - Информация о версии и статусе API
+- `GET /api/` - Информация об API
+- `GET /health` - Health check для мониторинга состояния системы
+
 ### Управление ключами
-- `POST /api/keys` - создание ключа
-- `GET /api/keys` - список всех ключей
-- `GET /api/keys/{key_id}` - получение ключа
-- `DELETE /api/keys/{key_id}` - удаление ключа
-- `GET /api/keys/{key_id}/config` - конфигурация ключа
+- `POST /api/keys` - создание ключа (лимит: 5/мин)
+- `GET /api/keys` - список всех ключей (лимит: 30/мин)
+- `GET /api/keys/{key_id}` - получение ключа (лимит: 60/мин)
+- `DELETE /api/keys/{key_id}` - удаление ключа (лимит: 10/мин)
+- `GET /api/keys/{key_id}/config` - конфигурация ключа (VLESS URL)
 
 ### Мониторинг трафика
-- `GET /api/traffic/simple` - простой мониторинг всех ключей
-- `GET /api/keys/{key_id}/traffic/simple` - простой мониторинг ключа
-- `POST /api/keys/{key_id}/traffic/simple/reset` - сброс статистики ключа
+- `GET /api/keys/{key_id}/traffic` - получить накопительный трафик ключа
+- `POST /api/keys/{key_id}/traffic/reset` - обнулить накопительный трафик ключа
 
-### Исторические данные
-- `GET /api/traffic/history` - общая история трафика
-- `GET /api/keys/{key_id}/traffic/history` - история трафика ключа
-- `GET /api/traffic/daily/{date}` - ежедневная статистика
+> Трафик считается накопительно с момента создания или последнего сброса. Данные обновляются автоматически каждые 5 минут и при каждом запросе.
 
-> Для исторических эндпоинтов хранится только накопительный `total_bytes`. Данные по дням/месяцам не накапливаются и возвращаются как заглушки.
+### Системные эндпоинты - Конфигурация
+- `POST /api/system/sync-config` - синхронизация конфигурации Xray с SQLite (лимит: 3/мин)
+- `GET /api/system/config-status` - статус синхронизации конфигурации
+- `POST /api/system/verify-reality` - проверка Reality настроек
 
-### Месячная статистика
-- `GET /api/traffic/monthly` - месячная статистика всех ключей
-- `GET /api/keys/{key_id}/traffic/monthly` - месячная статистика ключа
-
-### Системные эндпоинты
+### Системные эндпоинты - Порты
 - `GET /api/system/ports` - статус портов
-- `POST /api/system/ports/reset` - сброс портов
-- `GET /api/system/traffic/summary` - сводка трафика
+- `POST /api/system/ports/reset` - сброс всех портов
+- `GET /api/system/ports/status` - валидация портов
+
+### Системные эндпоинты - Xray
 - `GET /api/system/xray/config-status` - статус конфигурации Xray
 - `GET /api/system/xray/inbounds` - список активных inbound'ов
-- `POST /api/system/xray/sync-config` - синхронизация конфигурации
+- `POST /api/system/xray/sync-config` - синхронизация конфигурации Xray
+- `GET /api/system/xray/validate-sync` - валидация синхронизации Xray
+- `POST /api/system/fix-reality-keys` - исправление Reality ключей
 
-> **Важно:** новые ключи получают уникальный `short_id` (16-значный hex). Поле присутствует в ответах `POST /api/keys`, `GET /api/keys`, `GET /api/keys/{key_id}` и `GET /api/keys/{key_id}/config`. Эндпоинт `/api/keys/{key_id}/config` возвращает VLESS URL одновременно в полях `client_config` и `vless_url`.
+> **Важно:** новые ключи получают уникальный `short_id` (16-значный hex) и случайный SNI домен. Поля присутствуют в ответах `POST /api/keys`, `GET /api/keys`, `GET /api/keys/{key_id}` и `GET /api/keys/{key_id}/config`.
 
 ## Примеры запросов
 
 > Базовый адрес API: `https://<IP_ИЛИ_ДОМЕН>:8000`. Домен необязателен — можно использовать публичный IP сервера. При self-signed сертификате добавляйте `-k` в `curl`.
 
-### Создание ключа
+### Информационные
+
+#### Health check
+```bash
+curl -k -X GET "https://SERVER_ADDRESS:8000/health"
+```
+
+### Управление ключами
+
+#### Создание ключа
 ```bash
 curl -k -X POST "https://SERVER_ADDRESS:8000/api/keys" \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -47,19 +62,25 @@ curl -k -X POST "https://SERVER_ADDRESS:8000/api/keys" \
   -d '{"name": "user@example.com"}'
 ```
 
-### Получение списка ключей
+#### Получение списка ключей
 ```bash
 curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-### Получение конфигурации ключа
+#### Получение конкретного ключа
+```bash
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### Получение конфигурации ключа
 ```bash
 curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/config" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-### Удаление ключа
+#### Удаление ключа
 ```bash
 curl -k -X DELETE "https://SERVER_ADDRESS:8000/api/keys/{key_id}" \
   -H "X-API-Key: YOUR_API_KEY"
@@ -67,25 +88,37 @@ curl -k -X DELETE "https://SERVER_ADDRESS:8000/api/keys/{key_id}" \
 
 ### Мониторинг трафика
 
-#### Простой мониторинг всех ключей
+#### Получение накопительного трафика ключа
 ```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/simple" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-#### Простой мониторинг конкретного ключа
+#### Обнуление трафика ключа
 ```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/simple" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
-
-#### Сброс статистики ключа
-```bash
-curl -k -X POST "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/simple/reset" \
+curl -k -X POST "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/reset" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ### Системные запросы
+
+#### Синхронизация конфигурации
+```bash
+curl -k -X POST "https://SERVER_ADDRESS:8000/api/system/sync-config" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### Статус конфигурации
+```bash
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/config-status" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### Проверка Reality настроек
+```bash
+curl -k -X POST "https://SERVER_ADDRESS:8000/api/system/verify-reality" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
 
 #### Статус портов
 ```bash
@@ -99,9 +132,9 @@ curl -k -X POST "https://SERVER_ADDRESS:8000/api/system/ports/reset" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-#### Сводка трафика
+#### Валидация портов
 ```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/traffic/summary" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/ports/status" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -111,57 +144,27 @@ curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/xray/config-status" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-#### Синхронизация конфигурации
+#### Список inbound'ов Xray
+```bash
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/xray/inbounds" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+#### Синхронизация конфигурации Xray
 ```bash
 curl -k -X POST "https://SERVER_ADDRESS:8000/api/system/xray/sync-config" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-### Исторические данные
-
-#### Общая история трафика
+#### Валидация синхронизации Xray
 ```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/history" \
+curl -k -X GET "https://SERVER_ADDRESS:8000/api/system/xray/validate-sync" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-#### История трафика ключа
+#### Исправление Reality ключей
 ```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/history" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
-
-#### Ежедневная статистика
-```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/daily/2025-08-05" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
-
-### Месячная статистика
-
-#### Месячная статистика всех ключей
-```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/monthly" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
-
-#### Месячная статистика с указанием месяца
-```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/traffic/monthly?year_month=2025-08" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
-
-#### Месячная статистика ключа
-```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/monthly" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
-
-#### Месячная статистика ключа с указанием месяца
-```bash
-curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/monthly?year_month=2025-08" \
-  -H "X-API-Key: YOUR_API_KEY"
-```
+curl -k -X POST "https://SERVER_ADDRESS:8000/api/system/fix-reality-keys" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -175,28 +178,53 @@ curl -k -X GET "https://SERVER_ADDRESS:8000/api/keys/{key_id}/traffic/monthly?ye
   "uuid": "0e5ff24b-c47b-4193-ae76-3ba8233a1930",
   "created_at": "2025-08-05T00:34:28.901054",
   "is_active": true,
-  "port": 10001
+  "port": 10001,
+  "short_id": "5f9c2b7adfe7d8ab",
+  "sni": "www.microsoft.com"
 }
 ```
 
-### Простой мониторинг трафика
+### Получение трафика ключа
 ```json
 {
   "status": "success",
-  "data": {
-    "ports": {
-      "10001": {
-        "port": 10001,
-        "connections": 0,
-        "total_bytes": 0,
-        "total_formatted": "0 B",
-        "traffic_rate": 0,
-        "uuid": "0e5ff24b-c47b-4193-ae76-3ba8233a1930"
-      }
-    },
-    "total_connections": 0,
-    "total_bytes": 0
-  }
+  "key_id": "e9d747b1-07f7-490e-a26e-c8ea6d67fd7d",
+  "key_uuid": "0e5ff24b-c47b-4193-ae76-3ba8233a1930",
+  "total_bytes": 1234567,
+  "timestamp": "2025-11-21T16:00:00"
+}
+```
+
+### Обнуление трафика
+```json
+{
+  "status": "success",
+  "message": "Traffic reset successfully",
+  "key_id": "e9d747b1-07f7-490e-a26e-c8ea6d67fd7d",
+  "key_uuid": "0e5ff24b-c47b-4193-ae76-3ba8233a1930",
+  "timestamp": "2025-11-21T16:00:00"
+}
+```
+
+### Health check
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-11-21T16:00:00",
+  "version": "2.3.2",
+  "services": {
+    "xray": "running",
+    "api": "running",
+    "nginx": "running"
+  },
+  "resources": {
+    "memory_usage_percent": 45.2,
+    "memory_available_mb": 2048.5,
+    "disk_usage_percent": 32.1,
+    "disk_free_gb": 50.3,
+    "cpu_usage_percent": 12.5
+  },
+  "uptime_seconds": 86400
 }
 ```
 
@@ -218,13 +246,18 @@ VPN_SSL_KEY_PATH=/etc/ssl/private/vpn-api.key
 
 ## Коды ошибок
 
-- `401 Unauthorized` - неверный API ключ
-- `404 Not Found` - ключ не найден
-- `500 Internal Server Error` - внутренняя ошибка сервера
+- `200 OK` - Успешный запрос
+- `400 Bad Request` - Неверный запрос
+- `401 Unauthorized` - Неверный API ключ
+- `404 Not Found` - Ресурс не найден
+- `500 Internal Server Error` - Внутренняя ошибка сервера
+- `503 Service Unavailable` - Сервис недоступен (например, Xray Stats API)
 
 ## Примечания
 
-- Все запросы требуют заголовок `X-API-Key`
+- Все запросы (кроме `/`, `/api/` и `/health`) требуют заголовок `X-API-Key`
 - API поддерживает HTTPS
-- Мониторинг трафика использует простую систему оценки на основе соединений
-- Кэширование результатов мониторинга: 30 секунд 
+- Трафик считается через Xray Stats API и обновляется автоматически каждые 5 минут
+- Каждый ключ получает уникальный порт из диапазона 10001-10100
+- Максимум 100 активных ключей
+- При использовании self-signed сертификата добавляйте флаг `-k` в curl команды
