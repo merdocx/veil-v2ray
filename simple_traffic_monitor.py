@@ -96,8 +96,8 @@ class SimpleTrafficMonitor:
             
             for line in result.stdout.split('\n'):
                 if 'ESTAB' in line or 'LAST-ACK' in line or 'CLOSE-WAIT' in line:
-                    # Ищем порты в диапазоне 10001-10020
-                    for port in range(10001, 10021):
+                    # Ищем порты в диапазоне 10001-10100
+                    for port in range(10001, 10101):
                         if f':{port}' in line:
                             if port not in port_connections:
                                 port_connections[port] = []

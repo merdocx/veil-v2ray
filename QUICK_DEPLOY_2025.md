@@ -1,6 +1,6 @@
 # ⚡ Быстрое развертывание VPN сервера (2025)
 
-**Версия:** 2.1.4 | **Xray:** v25.10.15 | **Время:** ~15 минут
+**Версия:** 2.2.6 | **Xray:** v25.10.15 | **Время:** ~15 минут
 
 ---
 
@@ -110,7 +110,7 @@ cat > config/config.json << EOF
 }
 EOF
 
-# Инициализация файлов данных
+# Инициализация файлов данных (JSON-файлы служат зеркалом для SQLite)
 echo '[]' > config/keys.json
 echo '{"used_ports": {}, "port_assignments": {}, "created_at": "'$(date -Iseconds)'", "last_updated": "'$(date -Iseconds)'"}' > config/ports.json
 cat > config/traffic_history.json <<EOF
@@ -121,7 +121,14 @@ cat > config/traffic_history.json <<EOF
   "last_update": "$(date -Iseconds)"
 }
 EOF
-mkdir -p logs
+mkdir -p logs data
+# Файл data/vpn.db будет создан автоматически при первом запуске API
+# При необходимости проверяйте целостность через scripts/check_db_integrity.sh
+
+#### **Шаг 6.1: Настройка пользователя службы**
+```bash
+sudo ./scripts/setup_vpn_api_user.sh
+```
 ```
 
 #### **Шаг 7: Создание systemd сервисов**
@@ -145,13 +152,37 @@ sudo tee /etc/systemd/system/vpn-api.service > /dev/null << 'EOF'
 [Unit]
 Description=VPN Key Management API
 After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
 [Service]
 Type=simple
-User=root
+User=vpnapi
+Group=vpnapi
 WorkingDirectory=/root/vpn-server
 Environment=PATH=/root/vpn-server/venv/bin
+EnvironmentFile=/root/vpn-server/.env
 ExecStart=/root/vpn-server/venv/bin/python /root/vpn-server/api.py
 Restart=always
+RestartSec=5
+LimitNOFILE=65535
+MemoryMax=512M
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+ReadWritePaths=/root/vpn-server /var/log /run
+
 [Install]
 WantedBy=multi-user.target
 EOF

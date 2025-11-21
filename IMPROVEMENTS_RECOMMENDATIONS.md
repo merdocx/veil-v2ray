@@ -274,13 +274,13 @@ net.netfilter.nf_conntrack_tcp_timeout_close_wait = 30     # было 60
 ```bash
 # iptables правила:
 # 1. Rate limiting для новых соединений
-iptables -A INPUT -p tcp --dport 10001:10020 -m state --state NEW -m limit --limit 10/minute -j ACCEPT
+iptables -A INPUT -p tcp --dport 10001:10100 -m state --state NEW -m limit --limit 10/minute -j ACCEPT
 
 # 2. Защита от SYN flood
-iptables -A INPUT -p tcp --dport 10001:10020 --syn -m limit --limit 5/second -j ACCEPT
+iptables -A INPUT -p tcp --dport 10001:10100 --syn -m limit --limit 5/second -j ACCEPT
 
 # 3. Ограничение соединений с одного IP
-iptables -A INPUT -p tcp --dport 10001:10020 -m connlimit --connlimit-above 10 --connlimit-mask 32 -j REJECT
+iptables -A INPUT -p tcp --dport 10001:10100 -m connlimit --connlimit-above 10 --connlimit-mask 32 -j REJECT
 ```
 
 **Эффект:**

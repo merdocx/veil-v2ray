@@ -23,10 +23,24 @@ cd "$PROJECT_ROOT"
 
 log "Создание локального архива $ARCHIVE_PATH"
 
+# Проверка целостности базы перед бэкапом
+if [[ -f "$PROJECT_ROOT/data/vpn.db" ]]; then
+    if command -v sqlite3 >/dev/null 2>&1; then
+        log "Проверка целостности data/vpn.db"
+        if ! sqlite3 "$PROJECT_ROOT/data/vpn.db" "PRAGMA integrity_check;" | grep -qx "ok"; then
+            log "ERROR: integrity_check не прошёл, прерываю бэкап"
+            exit 1
+        fi
+    else
+        log "WARN: sqlite3 не найден, пропускаю проверку целостности базы"
+    fi
+fi
+
 declare -a INCLUDE_PATHS=(
     "config/keys.json"
     "config/ports.json"
     "config/traffic_history.json"
+    "data/vpn.db"
     "config/keys.env"
     ".env"
     "systemd/xray.service"
@@ -68,6 +82,7 @@ if [[ -n "${REMOTE_BACKUP_TARGET:-}" ]]; then
 fi
 
 log "Резервное копирование завершено"
+
 
 
 

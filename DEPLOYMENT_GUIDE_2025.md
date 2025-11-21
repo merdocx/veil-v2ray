@@ -85,7 +85,7 @@ sudo systemctl enable xray
 ### **2.3 HandlerService и мгновенное применение конфигурации**
 - В `config/config.json` в секции `api.services` уже указаны `StatsService` и `HandlerService`. Они нужны для управления Xray без перезапуска.
 - В конфиге присутствует локальный inbound `tag: "api"` на `127.0.0.1:10808` — gRPC сервер, через который `vpn-api` и вспомогательные скрипты добавляют/удаляют inbound'ы.
-- После запуска `xray.service` выполняет `sync_inbounds.py`, который синхронизирует все ключи из `config/keys.json` через HandlerService. Повторный запуск доступен вручную:
+- После запуска `xray.service` выполняет `sync_inbounds.py`, который синхронизирует все ключи (экспортируются в `config/keys.json` из SQLite) через HandlerService. Повторный запуск доступен вручную:
   ```bash
   python3 /root/vpn-server/sync_inbounds.py
   ```
@@ -108,7 +108,7 @@ source venv/bin/activate
 ```
 
 ### **3.3 Установка зависимостей**
-Файл `requirements.txt` уже входит в репозиторий (актуальная версия: **2.2.0**, дата: **2025-11-01**).
+Файл `requirements.txt` уже входит в репозиторий (актуальная версия: **2.2.6**, дата: **2025-11-21**).
 
 ```bash
 pip install -r requirements.txt
@@ -140,6 +140,8 @@ git clone <your-repository-url> /root/vpn-server
 ├── generate_client_config.py   # Генерация клиентских конфигураций
 ├── requirements.txt            # Python зависимости
 ├── .env                       # Переменные окружения
+├── data/
+│   └── vpn.db                 # SQLite база ключей и портов
 ├── config/
 │   ├── config.template.json          # Шаблон конфигурации Xray
 │   ├── keys.template.json            # Пустая база ключей
@@ -169,7 +171,8 @@ VPN_SSL_KEY_PATH=/etc/ssl/private/vpn-api.key
 # Настройки сервера
 VPN_HOST=0.0.0.0
 VPN_PORT=8000
-VPN_WORKERS=1
+VPN_WORKERS=2
+VPN_WORKER_MAX_REQUESTS=0
 
 # Настройки логирования
 VPN_LOG_LEVEL=info
@@ -215,12 +218,22 @@ sudo chmod 644 /etc/ssl/certs/vpn-api.crt
 - Отредактируйте `config/config.json`, если требуется поменять DNS или поведение API.
 - Файл `config/keys.json` может остаться пустым (`[]`) — ключи будут добавляться через REST API.
 - `config/keys.env` должен содержать Reality ключи (см. Шаг 6) и используется HandlerService для выдачи inbound’ов без перезапуска.
+- `data/vpn.db` создаётся автоматически при первом запуске API и является основным хранилищем. JSON-файлы (`keys.json`, `ports.json`) обновляются из базы для совместимости, но вручную их редактировать больше не требуется.
+- Для проверки целостности базы используйте `./scripts/check_db_integrity.sh` (нужен `sqlite3`).
 
 ### **5.4 Инициализация файлов данных**
 - После копирования шаблонов дополнительно создайте директорию для логов:
   ```bash
-  mkdir -p /root/vpn-server/logs
+  mkdir -p /root/vpn-server/logs /root/vpn-server/data
   ```
+
+### **5.5 Настройка пользователя службы**
+Чтобы `vpn-api.service` мог работать в изолированном окружении, создайте системного пользователя и настройте права:
+```bash
+cd /root/vpn-server
+sudo ./scripts/setup_vpn_api_user.sh
+```
+Скрипт создаст пользователя `vpnapi`, выставит права на директории и подготовит окружение для systemd unit-а.
 
 ---
 

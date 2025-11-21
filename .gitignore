@@ -4,6 +4,7 @@ config/keys.json
 config/config.json
 config/ports.json
 config/traffic_history.json
+data/
 .env
 
 # Логи
@@ -32,3 +33,15 @@ Thumbs.db
 config/backups/
 config/*.bak
 *.bak
+
+# Устаревшие файлы (backup версии)
+*_backup.py
+*_fixed.py
+*_old.py
+
+# Отчеты и диагностика (временные)
+*_REPORT.md
+*_ISSUE*.md
+*_DIAGNOSTIC*.md
+*_FIX.md
+ANALYSIS_*.md

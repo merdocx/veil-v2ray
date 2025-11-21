@@ -46,6 +46,7 @@ from port_manager import port_manager, assign_port_for_key, release_port_for_key
 from xray_config_manager import xray_config_manager, add_key_to_xray_config, remove_key_from_xray_config, update_xray_config_for_keys, get_xray_config_status, validate_xray_config_sync, fix_reality_keys_in_xray_config
 from simple_traffic_monitor import get_simple_uuid_traffic, get_simple_all_ports_traffic, reset_simple_uuid_traffic
 from traffic_history_manager import traffic_history
+from storage.sqlite_storage import storage
 try:
     from xray_stats_reader import get_xray_user_traffic, get_all_xray_users_traffic
     XRAY_STATS_AVAILABLE = True
@@ -53,10 +54,28 @@ except ImportError:
     XRAY_STATS_AVAILABLE = False
     logging.warning("xray_stats_reader недоступен, используется fallback")
 
-app = FastAPI(title="VPN Key Management API", version="1.0.0")
+app = FastAPI(title="VPN Key Management API", version="2.2.6")
 
 # Настройка rate limiting с расширенными правилами
-limiter = Limiter(key_func=get_remote_address)
+# Белый список IP для исключения из rate limiting (бот)
+BOT_WHITELIST_IPS = ["77.246.105.29"]
+
+def get_rate_limit_key(request: Request):
+    """Получить ключ для rate limiting, исключая IP бота"""
+    # Проверяем X-Forwarded-For (если запрос идет через nginx)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # Берем первый IP из списка (реальный IP клиента)
+        client_ip = forwarded_for.split(",")[0].strip()
+        if client_ip in BOT_WHITELIST_IPS:
+            return None  # Отключаем rate limiting для бота
+    # Иначе используем стандартный метод
+    client_ip = get_remote_address(request)
+    if client_ip in BOT_WHITELIST_IPS:
+        return None  # Отключаем rate limiting для бота
+    return client_ip
+
+limiter = Limiter(key_func=get_rate_limit_key)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -67,7 +86,6 @@ CACHE_TTL = 60
 
 # Пути к файлам
 CONFIG_FILE = "/root/vpn-server/config/config.json"
-KEYS_FILE = "/root/vpn-server/config/keys.json"
 
 # API ключ для аутентификации - загружается из переменных окружения
 API_KEY = os.getenv("VPN_API_KEY")
@@ -98,12 +116,6 @@ async def verify_api_key(x_api_key: str = Header(None)):
         )
     return x_api_key
 
-# Инициализация файла ключей если не существует
-def init_keys_file():
-    if not os.path.exists(KEYS_FILE):
-        with open(KEYS_FILE, 'w') as f:
-            json.dump([], f)
-
 # Загрузка конфигурации Xray с кэшированием
 @lru_cache(maxsize=1)
 def load_config_cached():
@@ -122,55 +134,73 @@ def save_config(config):
     # Инвалидируем кэш при сохранении
     load_config_cached.cache_clear()
 
-# Загрузка ключей с кэшированием
-@lru_cache(maxsize=1)
-def load_keys_cached():
-    """Загрузка ключей с LRU кэшем"""
-    init_keys_file()
-    with open(KEYS_FILE, 'r') as f:
-        return json.load(f)
-
+# Загрузка ключей
 def load_keys():
-    """Загрузка ключей (с автоматической инвалидацией кэша)"""
-    return load_keys_cached()
-
-# Сохранение ключей
-def save_keys(keys):
-    with open(KEYS_FILE, 'w') as f:
-        json.dump(keys, f, indent=2)
-    # Инвалидируем кэш при сохранении
-    load_keys_cached.cache_clear()
+    """Чтение всех ключей из хранилища"""
+    return storage.get_all_keys()
 
 # Перезапуск Xray сервиса с проверкой
-def restart_xray():
+def check_xray_process():
+    """Проверка наличия процесса Xray"""
     try:
-        # Используем полный путь к systemctl
-        result = subprocess.run(['/usr/bin/systemctl', 'restart', 'xray'], 
-                              capture_output=True, text=True, timeout=30)
-        if result.returncode == 0:
-            print(f"Xray restart command executed: {result.stdout}")
-            
-            # Ждем немного для стабилизации
-            import time
-            time.sleep(2)
-            
-            # Проверяем статус сервиса
-            status_result = subprocess.run(['/usr/bin/systemctl', 'is-active', 'xray'], 
-                                         capture_output=True, text=True, timeout=10)
-            if status_result.returncode == 0 and status_result.stdout.strip() == 'active':
-                print("Xray service is active and running")
-                return True
-            else:
-                print(f"Xray service is not active: {status_result.stdout} {status_result.stderr}")
-                return False
-        else:
-            print(f"Failed to restart Xray: {result.stderr}")
-            return False
-    except subprocess.TimeoutExpired:
-        print("Timeout while restarting Xray")
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                if 'xray' in proc.info['name'].lower():
+                    cmdline = ' '.join(proc.info.get('cmdline', []))
+                    if 'xray' in cmdline and 'config.json' in cmdline:
+                        return True
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
         return False
     except Exception as e:
-        print(f"Error restarting Xray: {e}")
+        logger.error(f"Error checking Xray process: {e}")
+        return False
+
+def restart_xray():
+    """Перезапуск Xray - сначала через systemctl, если не работает - напрямую"""
+    try:
+        # Останавливаем все процессы xray
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                if 'xray' in proc.info['name'].lower():
+                    cmdline = ' '.join(proc.info.get('cmdline', []))
+                    if 'xray' in cmdline and 'config.json' in cmdline:
+                        proc.terminate()
+                        proc.wait(timeout=5)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
+                pass
+        
+        time.sleep(2)
+        
+        # Пробуем через systemctl
+        try:
+            result = subprocess.run(['/usr/bin/systemctl', 'restart', 'xray'], 
+                                  timeout=10, capture_output=True, text=True)
+            time.sleep(3)
+            if check_xray_process():
+                logger.info("Xray restarted via systemctl")
+                return True
+        except Exception as e:
+            logger.warning(f"systemctl restart failed: {e}")
+        
+        # Если systemctl не сработал, запускаем напрямую
+        logger.warning("systemctl restart failed, starting Xray directly...")
+        subprocess.Popen(
+            ['/usr/local/bin/xray', 'run', '-config', '/root/vpn-server/config/config.json'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+        time.sleep(3)
+        
+        if check_xray_process():
+            logger.info("Xray started directly")
+            return True
+        else:
+            logger.error("Xray restart failed")
+            return False
+    except Exception as e:
+        logger.error(f"Error restarting Xray: {e}")
         return False
 
 # Проверка конфигурации Xray
@@ -247,19 +277,19 @@ def verify_reality_settings():
 
 @app.get("/")
 async def root():
-    return {"message": "VPN Key Management API", "version": "1.0.0", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.2.6", "status": "running"}
 
 @app.get("/api/")
 async def api_root():
-    return {"message": "VPN Key Management API", "version": "1.0.0", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.2.6", "status": "running"}
 
 @app.get("/health")
 async def health_check():
     """Health check эндпоинт для мониторинга состояния системы"""
     try:
         # Проверка статуса сервисов
-        xray_status = "running" if subprocess.run(['/usr/bin/systemctl', 'is-active', 'xray'], 
-                                                capture_output=True, text=True).returncode == 0 else "stopped"
+        # Xray проверяем через процесс, так как systemd unit может не работать
+        xray_status = "running" if check_xray_process() else "stopped"
         api_status = "running" if subprocess.run(['/usr/bin/systemctl', 'is-active', 'vpn-api'], 
                                                capture_output=True, text=True).returncode == 0 else "stopped"
         nginx_status = "running" if subprocess.run(['/usr/bin/systemctl', 'is-active', 'nginx'], 
@@ -298,10 +328,13 @@ async def health_check():
 @limiter.limit("5/minute")
 async def create_key(request: Request, key_request: CreateKeyRequest, api_key: str = Depends(verify_api_key)):
     """Создать новый VPN ключ с индивидуальным портом"""
+    key_uuid = None
+    assigned_port = None
+    key_stored = False
+    
     try:
         # Проверяем лимит ключей (максимум 100)
-        keys = load_keys()
-        if len(keys) >= 100:
+        if storage.count_keys() >= 100:
             raise HTTPException(status_code=400, detail="Maximum number of keys (100) reached")
         
         # Генерация UUID для ключа
@@ -326,16 +359,12 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
             "short_id": short_id
         }
         
-        # Загрузка существующих ключей
-        keys.append(new_key)
-        save_keys(keys)
+        # Сохраняем ключ в хранилище
+        storage.add_key(new_key)
+        key_stored = True
         
         # Добавляем ключ в конфигурацию Xray с индивидуальным портом
         if not add_key_to_xray_config(key_uuid, key_request.name, short_id):
-            # Откатываем изменения при ошибке
-            keys = [k for k in keys if k["uuid"] != key_uuid]
-            save_keys(keys)
-            release_port_for_key(key_uuid)
             raise HTTPException(status_code=500, detail="Failed to add key to Xray config")
         
         # Инициализируем историю трафика для нового ключа
@@ -352,8 +381,18 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
         return VPNKey(**new_key)
         
     except HTTPException:
+        if assigned_port:
+            release_port_for_key(key_uuid)
+        if key_stored:
+            storage.delete_key_by_uuid(key_uuid)
+            traffic_history.reset_key_traffic(key_uuid)
         raise
     except Exception as e:
+        if assigned_port:
+            release_port_for_key(key_uuid)
+        if key_stored:
+            storage.delete_key_by_uuid(key_uuid)
+            traffic_history.reset_key_traffic(key_uuid)
         raise HTTPException(status_code=500, detail=f"Failed to create key: {str(e)}")
 
 @app.delete("/api/keys/{key_id}")
@@ -382,9 +421,8 @@ async def delete_key(key_id: str, request: Request, api_key: str = Depends(verif
         if not release_port_for_key(key_to_delete["uuid"]):
             print(f"Warning: Failed to release port for UUID: {key_to_delete['uuid']}")
         
-        # Удаление ключа из списка
-        keys = [k for k in keys if k["id"] != key_to_delete["id"]]
-        save_keys(keys)
+        # Удаление ключа из хранилища
+        storage.delete_key_by_uuid(key_to_delete["uuid"])
         
         return {"message": "Key deleted successfully"}
         
@@ -1045,19 +1083,28 @@ if __name__ == "__main__":
     # Настройки из переменных окружения
     host = os.getenv("VPN_HOST", "0.0.0.0")
     port = int(os.getenv("VPN_PORT", "8000"))
+    workers = int(os.getenv("VPN_WORKERS", "2"))
+    max_requests = int(os.getenv("VPN_WORKER_MAX_REQUESTS", "0") or 0)
     enable_https = os.getenv("VPN_ENABLE_HTTPS", "false").lower() == "true"
     ssl_cert = os.getenv("VPN_SSL_CERT_PATH", "/etc/ssl/certs/vpn-api.crt")
     ssl_key = os.getenv("VPN_SSL_KEY_PATH", "/etc/ssl/private/vpn-api.key")
     
+    uvicorn_kwargs = {
+        "host": host,
+        "port": port,
+        "workers": workers,
+    }
+    if max_requests > 0:
+        uvicorn_kwargs["limit_max_requests"] = max_requests
+    
     if enable_https and os.path.exists(ssl_cert) and os.path.exists(ssl_key):
-        print(f"🚀 Starting VPN API with HTTPS on {host}:{port}")
+        print(f"🚀 Starting VPN API with HTTPS on {host}:{port} ({workers} workers)")
         uvicorn.run(
-            app, 
-            host=host, 
-            port=port,
+            app,
             ssl_certfile=ssl_cert,
-            ssl_keyfile=ssl_key
+            ssl_keyfile=ssl_key,
+            **uvicorn_kwargs,
         )
     else:
-        print(f"🚀 Starting VPN API with HTTP on {host}:{port}")
-        uvicorn.run(app, host=host, port=port) 
+        print(f"🚀 Starting VPN API with HTTP on {host}:{port} ({workers} workers)")
+        uvicorn.run(app, **uvicorn_kwargs)

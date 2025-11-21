@@ -101,13 +101,24 @@ VPN_SSL_CERT_PATH=/etc/ssl/certs/vpn-api.crt
 VPN_SSL_KEY_PATH=/etc/ssl/private/vpn-api.key
 VPN_HOST=0.0.0.0
 VPN_PORT=8000
-VPN_WORKERS=1
+VPN_WORKERS=2
+VPN_WORKER_MAX_REQUESTS=0
 VPN_LOG_LEVEL=info
 VPN_LOG_FILE=$VPN_DIR/logs/api.log
 EOF
 
 # Создание директорий
-mkdir -p config logs
+mkdir -p config logs data
+
+# Создание пользователя и прав для сервиса
+if ! id -u vpnapi >/dev/null 2>&1; then
+    print_info "Создание системного пользователя vpnapi..."
+    useradd --system --shell /usr/sbin/nologin --home $VPN_DIR vpnapi
+else
+    print_info "Пользователь vpnapi уже существует"
+fi
+chown -R vpnapi:vpnapi $VPN_DIR
+chmod -R 750 $VPN_DIR
 
 # Генерация SSL сертификатов
 print_info "Генерация SSL сертификатов..."
@@ -169,7 +180,8 @@ cat > config/config.json << EOF
 }
 EOF
 
-# Инициализация файлов данных
+# Инициализация файлов данных (JSON зеркала для SQLite)
+mkdir -p logs data
 echo '[]' > config/keys.json
 echo "{\"used_ports\": {}, \"port_assignments\": {}, \"created_at\": \"$(date -Iseconds)\", \"last_updated\": \"$(date -Iseconds)\"}" > config/ports.json
 cat > config/traffic_history.json <<EOF
@@ -180,6 +192,7 @@ cat > config/traffic_history.json <<EOF
   "last_update": "$(date -Iseconds)"
 }
 EOF
+print_info "data/vpn.db будет создан автоматически при первом запуске API"
 
 # Шаг 7: Создание systemd сервисов
 print_info "Создание systemd сервисов..."

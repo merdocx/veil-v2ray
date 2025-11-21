@@ -58,7 +58,8 @@ iptables -A VPN_INPUT -p tcp --dport 10001:10100 --syn -m limit --limit 5/second
 iptables -A VPN_INPUT -p tcp --dport 10001:10100 -m state --state NEW -m limit --limit 10/minute --limit-burst 20 -j ACCEPT
 
 # 6. Ограничение соединений с одного IP (в конце, чтобы не блокировать установленные)
-iptables -A VPN_INPUT -p tcp --dport 10001:10100 -m connlimit --connlimit-above 20 --connlimit-mask 32 -j REJECT --reject-with tcp-reset
+# Увеличено до 100 для активных пользователей (множество вкладок/приложений)
+iptables -A VPN_INPUT -p tcp --dport 10001:10100 -m connlimit --connlimit-above 100 --connlimit-mask 32 -j REJECT --reject-with tcp-reset
 
 # Применяем цепочку VPN_INPUT к VPN портам
 iptables -I INPUT 3 -p tcp --dport 10001:10100 -j VPN_INPUT

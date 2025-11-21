@@ -3,8 +3,6 @@
 Снапшот-менеджер трафика: для каждого ключа храним только накопительный total_bytes.
 """
 
-import json
-import os
 from datetime import datetime
 from typing import Dict, Optional, Any
 import logging
@@ -20,46 +18,11 @@ except ImportError:
     logger.warning("xray_stats_reader недоступен, используется fallback")
 
 
+from storage.sqlite_storage import storage
+
+
 class TrafficHistoryManager:
     SNAPSHOT_VERSION = "2.0"
-
-    def __init__(self, history_file: str = "config/traffic_history.json"):
-        self.history_file = history_file
-        self.ensure_history_file()
-
-    def ensure_history_file(self):
-        if not os.path.exists(self.history_file):
-            os.makedirs(os.path.dirname(self.history_file), exist_ok=True)
-            self._save_history(
-                {
-                    "version": self.SNAPSHOT_VERSION,
-                    "created_at": datetime.now().isoformat(),
-                    "keys_history": {},
-                    "last_update": datetime.now().isoformat(),
-                }
-            )
-            logger.info("Создан новый snapshot трафика: %s", self.history_file)
-
-    def _load_history(self) -> Dict[str, Any]:
-        try:
-            with open(self.history_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logger.warning("Ошибка загрузки snapshot: %s", e)
-            data = {
-                "version": self.SNAPSHOT_VERSION,
-                "created_at": datetime.now().isoformat(),
-                "keys_history": {},
-                "last_update": datetime.now().isoformat(),
-            }
-        if "keys_history" not in data:
-            data["keys_history"] = {}
-        return data
-
-    def _save_history(self, data: Dict[str, Any]):
-        data["last_update"] = datetime.now().isoformat()
-        with open(self.history_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
 
     @staticmethod
     def _new_entry() -> Dict[str, Any]:
@@ -84,16 +47,14 @@ class TrafficHistoryManager:
         port: int,
         current_traffic: Optional[Dict[str, Any]] = None,
     ):
-        history = self._load_history()
-        entry = history["keys_history"].setdefault(key_uuid, self._new_entry())
+        entry = storage.get_traffic_history_entry(key_uuid) or self._new_entry()
 
         delta, _ = self._calculate_delta(key_uuid, entry, current_traffic)
         if delta > 0:
             entry["total_bytes"] += delta
 
         entry["last_update"] = datetime.now().isoformat()
-        history["keys_history"][key_uuid] = entry
-        self._save_history(history)
+        storage.save_traffic_history_entry(key_uuid, entry)
         logger.info("Обновлён total_bytes %s: +%s", key_uuid, delta)
 
     def _calculate_delta(
@@ -159,27 +120,23 @@ class TrafficHistoryManager:
         return delta, connections
 
     def get_key_total_traffic(self, key_uuid: str) -> Optional[Dict[str, Any]]:
-        history = self._load_history()
-        entry = history["keys_history"].get(key_uuid)
+        entry = storage.get_traffic_history_entry(key_uuid)
         if not entry:
             return None
         return self._format_key_snapshot(key_uuid, entry)
 
     def get_all_keys_total_traffic(self) -> Dict[str, Any]:
-        history = self._load_history()
-        total_bytes = sum(
-            entry.get("total_bytes", 0) for entry in history["keys_history"].values()
-        )
+        history = storage.get_all_traffic_history()
+        total_bytes = sum(entry.get("total_bytes", 0) for entry in history.values())
 
         keys = [
-            self._format_key_snapshot(uuid, entry)
-            for uuid, entry in history["keys_history"].items()
+            self._format_key_snapshot(uuid, entry) for uuid, entry in history.items()
         ]
 
         return {
             "total_keys": len(keys),
             "total_traffic_bytes": total_bytes,
-            "last_update": history.get("last_update"),
+            "last_update": datetime.now().isoformat(),
             "keys": keys,
         }
 
@@ -208,8 +165,8 @@ class TrafficHistoryManager:
     def get_key_monthly_traffic(
         self, key_uuid: str, year_month: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
-        history = self._load_history()
-        entry = history["keys_history"].get(key_uuid)
+        history = storage.get_all_traffic_history()
+        entry = history.get(key_uuid)
         if not entry:
             return None
 
@@ -224,14 +181,10 @@ class TrafficHistoryManager:
         return snapshot
 
     def reset_key_traffic(self, key_uuid: str) -> bool:
-        history = self._load_history()
-        if key_uuid not in history["keys_history"]:
-            return False
-
-        history["keys_history"][key_uuid] = self._new_entry()
-        self._save_history(history)
-        logger.info("Сброшен total_bytes для %s", key_uuid)
-        return True
+        success = storage.reset_traffic_history_entry(key_uuid)
+        if success:
+            logger.info("Сброшен total_bytes для %s", key_uuid)
+        return success
 
     def cleanup_old_data(self, days_to_keep: int = 30):
         logger.info(

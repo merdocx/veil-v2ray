@@ -257,7 +257,8 @@ class XrayConfigManager:
                     {
                         "id": uuid,
                         "flow": "",
-                        "email": uuid
+                        "email": uuid,
+                        "level": 1
                     }
                 ],
                 "decryption": "none"
