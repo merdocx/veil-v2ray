@@ -30,3 +30,5 @@ Thumbs.db
 
 # Резервные конфигурации
 config/backups/
+config/*.bak
+*.bak
