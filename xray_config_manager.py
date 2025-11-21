@@ -425,17 +425,25 @@ class XrayConfigManager:
                     if existing_inbound:
                         # Сохраняем существующий inbound с его оригинальными SNI
                         inbound = existing_inbound.copy()
-                        # Обновляем только необходимые поля (port, short_id если изменился)
+                        # Обновляем только необходимые поля (port, Reality ключи из keys.env)
                         # Получаем порт из SQLite через storage
                         from storage.sqlite_storage import storage
                         inbound["port"] = storage.get_port_for_uuid(uuid)
-                        if key.get("short_id"):
-                            reality_settings = inbound.get("streamSettings", {}).get("realitySettings", {})
-                            if reality_settings:
-                                # Обновляем shortIds только если они изменились
-                                current_short_ids = reality_settings.get("shortIds", [])
-                                if key.get("short_id") not in current_short_ids:
-                                    reality_settings["shortIds"] = [key.get("short_id")]
+                        
+                        # ВАЖНО: Всегда используем централизованные Reality ключи из keys.env
+                        # Игнорируем short_id из БД, так как он может быть устаревшим
+                        reality_keys = self._load_reality_keys()
+                        reality_settings = inbound.get("streamSettings", {}).get("realitySettings", {})
+                        if reality_settings:
+                            # Обновляем privateKey из keys.env
+                            if reality_keys.get('private_key'):
+                                reality_settings['privateKey'] = reality_keys['private_key']
+                            # Обновляем shortIds из keys.env (централизованный ключ)
+                            if reality_keys.get('short_id'):
+                                reality_settings['shortIds'] = [reality_keys['short_id']]
+                            # Обновляем publicKey из keys.env (если есть)
+                            if reality_keys.get('public_key'):
+                                reality_settings['publicKey'] = reality_keys['public_key']
                     else:
                         # Новый ключ - создаем inbound с новым списком SNI
                         inbound = self.create_inbound_for_key(

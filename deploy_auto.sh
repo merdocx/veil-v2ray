@@ -117,8 +117,22 @@ if ! id -u vpnapi >/dev/null 2>&1; then
 else
     print_info "Пользователь vpnapi уже существует"
 fi
-chown -R vpnapi:vpnapi $VPN_DIR
-chmod -R 750 $VPN_DIR
+# Исправление прав доступа для корректной работы сервисов
+if [ -f "$VPN_DIR/scripts/fix_permissions.sh" ]; then
+    print_info "Исправление прав доступа..."
+    bash "$VPN_DIR/scripts/fix_permissions.sh"
+else
+    # Fallback: базовая настройка прав
+    print_warning "Скрипт fix_permissions.sh не найден, используем базовую настройку прав"
+    chown -R vpnapi:vpnapi "$VPN_DIR/data/"
+    chmod -R 755 "$VPN_DIR/data/"
+    chown root:vpnapi "$VPN_DIR/config/"
+    chmod 775 "$VPN_DIR/config/"
+    chown root:vpnapi "$VPN_DIR/config/config.json" 2>/dev/null || true
+    chmod 664 "$VPN_DIR/config/config.json" 2>/dev/null || true
+    chown -R root:root "$VPN_DIR/logs/"
+    chmod -R 755 "$VPN_DIR/logs/"
+fi
 
 # Генерация SSL сертификатов
 print_info "Генерация SSL сертификатов..."
