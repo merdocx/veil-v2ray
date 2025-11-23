@@ -347,11 +347,35 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
         if storage.count_keys() >= 100:
             raise HTTPException(status_code=400, detail="Maximum number of keys (100) reached")
         
+        # КРИТИЧЕСКАЯ ПРОВЕРКА: Убеждаемся, что Reality ключи доступны
+        reality_keys = xray_config_manager._load_reality_keys()
+        if not reality_keys.get('public_key'):
+            raise HTTPException(
+                status_code=500,
+                detail="Public key not found in keys.env. Please check configuration."
+            )
+        if not reality_keys.get('private_key'):
+            raise HTTPException(
+                status_code=500,
+                detail="Private key not found in keys.env. Please check configuration."
+            )
+        
         # Генерация UUID для ключа
         key_uuid = str(uuid.uuid4())
 
         # Генерация индивидуального shortId для каждого ключа (для разделения пользователей)
-        short_id = secrets.token_hex(8)
+        # Используем 4 байта для получения 8 hex символов (совместимость с Android)
+        # Проверяем уникальность short_id
+        existing_keys = storage.get_all_keys()
+        existing_short_ids = {k.get('short_id') for k in existing_keys if k.get('short_id')}
+        short_id = secrets.token_hex(4)
+        max_attempts = 10
+        attempt = 0
+        while short_id in existing_short_ids and attempt < max_attempts:
+            short_id = secrets.token_hex(4)
+            attempt += 1
+        if short_id in existing_short_ids:
+            raise HTTPException(status_code=500, detail="Failed to generate unique short_id")
         
         # Выбор случайного SNI из доступных ServerNames (будет сохранен и использоваться постоянно)
         import json
@@ -368,7 +392,8 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
         if not server_names:
             # Fallback на стандартный список
             server_names = ['www.microsoft.com', 'www.cloudflare.com', 'www.google.com']
-        selected_sni = random.choice(server_names)  # Выбираем случайный SNI один раз при создании
+        # Используем фиксированный SNI для всех ключей (iOS и Android совместимость)
+        selected_sni = "www.microsoft.com"  # Фиксированный для всех ключей
         
         # Назначаем порт для ключа
         assigned_port = assign_port_for_key(key_uuid, str(uuid.uuid4()), key_request.name)
@@ -395,6 +420,29 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
         if not add_key_to_xray_config(key_uuid, key_request.name, short_id):
             raise HTTPException(status_code=500, detail="Failed to add key to Xray config")
         
+        # КРИТИЧЕСКАЯ ПРОВЕРКА: Убеждаемся, что publicKey добавлен в конфигурацию
+        try:
+            config = xray_config_manager._load_config()
+            if config:
+                reality_keys = xray_config_manager._load_reality_keys()
+                public_key = reality_keys.get('public_key')
+                if public_key:
+                    for inbound in config.get('inbounds', []):
+                        clients = inbound.get('settings', {}).get('clients', [])
+                        for client in clients:
+                            if client.get('id') == key_uuid:
+                                reality_settings = inbound.get('streamSettings', {}).get('realitySettings', {})
+                                if not reality_settings.get('publicKey'):
+                                    # Исправляем отсутствие publicKey
+                                    reality_settings['publicKey'] = public_key
+                                    xray_config_manager._save_config(config)
+                                    xray_config_manager._apply_inbound_via_api(inbound)
+                                    logger.warning(f"Fixed missing publicKey for key {key_uuid} after creation")
+                                break
+        except Exception as e:
+            logger.error(f"Failed to verify publicKey after key creation: {e}")
+            # Не прерываем создание, но логируем ошибку
+        
         # Проверяем синхронизацию short_id после создания
         try:
             # Перезагружаем ключ из БД для проверки
@@ -418,6 +466,21 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
             )
         except Exception as e:
             print(f"Warning: Failed to initialize traffic history for key {key_uuid}: {e}")
+        
+        # Проверка корректности сгенерированного URL
+        try:
+            from generate_client_config import generate_client_config
+            test_url = generate_client_config(key_uuid, key_request.name, assigned_port)
+            # Проверяем, что URL содержит все необходимые параметры
+            required_params = ['pbk=', 'sid=', 'sni=']
+            if not all(param in test_url for param in required_params):
+                logger.error(f"Generated URL is missing required parameters: {test_url}")
+                # Не прерываем создание, но логируем ошибку
+            if not test_url.startswith('vless://'):
+                logger.error(f"Generated URL has invalid format: {test_url}")
+        except Exception as e:
+            logger.error(f"Failed to generate test URL for verification: {e}")
+            # Не прерываем создание, но логируем ошибку
         
         return VPNKey(**new_key)
         
@@ -525,9 +588,9 @@ async def get_key_config(key_id: str, api_key: str = Depends(verify_api_key)):
         result = subprocess.run([
             '/root/vpn-server/generate_client_config.py',
             key["uuid"],
-            key["name"],
+            key.get("name", "") or "",  # Убеждаемся, что имя передается
             str(port) if port else "443"
-        ], capture_output=True, text=True, check=True)
+        ], capture_output=True, text=True, encoding='utf-8', check=True)
 
         vless_url = result.stdout.strip()
         response = {

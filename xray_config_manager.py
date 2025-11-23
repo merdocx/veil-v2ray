@@ -245,6 +245,21 @@ class XrayConfigManager:
             print("WARNING: No short_id provided and centralized short_id not found")
             short_ids = ["2680beb40ea2fde0"]
         
+        # Используем фиксированный serverName для всех ключей (iOS и Android совместимость)
+        server_names_list = [
+            "www.microsoft.com",
+            "www.cloudflare.com",
+            "www.google.com",
+            "www.github.com",
+            "www.apple.com",
+            "www.facebook.com",
+            "www.adobe.com",
+            "www.instagram.com"
+        ]
+        
+        # Фиксированный serverName для всех ключей
+        server_name = "www.microsoft.com"
+        
         # Создаем inbound конфигурацию с централизованными ключами
         inbound = {
             "listen": "0.0.0.0",
@@ -256,7 +271,7 @@ class XrayConfigManager:
                         "id": uuid,
                         "flow": "",
                         "email": uuid,
-                        "level": 1
+                        "level": 1  # Явно установлен для Android совместимости
                     }
                 ],
                 "decryption": "none"
@@ -268,18 +283,13 @@ class XrayConfigManager:
                     "show": False,
                     "dest": "www.microsoft.com:443",
                     "xver": 0,
-                    "serverNames": [
-                        "www.microsoft.com",
-                        "www.cloudflare.com",
-                        "www.google.com",
-                        "www.github.com",
-                        "www.apple.com",
-                        "www.facebook.com",
-                        "www.adobe.com",
-                        "www.instagram.com"
-                    ],
+                    "serverName": server_name,  # Фиксированный для всех ключей (iOS и Android совместимость)
+                    "serverNames": server_names_list,
                     "privateKey": reality_keys['private_key'],
+                    "publicKey": reality_keys.get('public_key', ''),  # Добавляем публичный ключ для работы Reality
                     "shortIds": short_ids,
+                    "spiderX": "/",
+                    "fingerprint": "chrome",  # Фиксированный для всех (chrome лучше работает с v2raytun на Android)
                     "maxTimeDiff": 600
                 }
             },
@@ -442,18 +452,36 @@ class XrayConfigManager:
                             # Обновляем shortIds - используем индивидуальный short_id из БД
                             individual_short_id = key.get("short_id")
                             if individual_short_id:
+                                # Обрезаем short_id до 8 символов для Android совместимости
+                                if len(individual_short_id) > 8:
+                                    individual_short_id = individual_short_id[:8]
                                 reality_settings['shortIds'] = [individual_short_id]  # Индивидуальный для ключа
                             elif reality_keys.get('short_id'):
                                 reality_settings['shortIds'] = [reality_keys['short_id']]  # Fallback на централизованный
+                            # Добавляем spiderX, fingerprint и serverName для Android совместимости
+                            if 'spiderX' not in reality_settings or not reality_settings.get('spiderX'):
+                                reality_settings['spiderX'] = "/"
+                            if 'fingerprint' not in reality_settings or reality_settings.get('fingerprint') != 'chrome':
+                                reality_settings['fingerprint'] = "chrome"  # Фиксированный для всех (chrome лучше работает с v2raytun на Android)
+                            # Фиксированный serverName для всех ключей (iOS и Android совместимость)
+                            server_names = reality_settings.get('serverNames', [])
+                            if server_names:
+                                reality_settings['serverName'] = "www.microsoft.com"  # Фиксированный для всех
+                            else:
+                                reality_settings['serverName'] = "www.microsoft.com"
                             # Обновляем publicKey из keys.env (если есть)
                             if reality_keys.get('public_key'):
                                 reality_settings['publicKey'] = reality_keys['public_key']
                     else:
                         # Новый ключ - создаем inbound с индивидуальным short_id из БД
+                        individual_short_id = key.get("short_id")
+                        # Обрезаем short_id до 8 символов если он длиннее (для Android совместимости)
+                        if individual_short_id and len(individual_short_id) > 8:
+                            individual_short_id = individual_short_id[:8]
                         inbound = self.create_inbound_for_key(
                             uuid,
                             key["name"],
-                            key.get("short_id")  # Используем индивидуальный short_id из БД
+                            individual_short_id  # Используем индивидуальный short_id из БД
                         )
                     
                     if inbound:
@@ -540,6 +568,19 @@ class XrayConfigManager:
                         reality_settings["privateKey"] = reality_keys['private_key']
                         fixed_count += 1
                         print(f"Fixed private key for inbound {inbound.get('tag', 'unknown')}")
+                    
+                    # Добавляем spiderX, fingerprint и serverName для Android совместимости
+                    if 'spiderX' not in reality_settings or not reality_settings.get('spiderX'):
+                        reality_settings['spiderX'] = "/"
+                        fixed_count += 1
+                    if 'fingerprint' not in reality_settings or reality_settings.get('fingerprint') != 'chrome':
+                        reality_settings['fingerprint'] = "chrome"  # Изменено на "chrome" для v2raytun
+                        fixed_count += 1
+                    # Фиксированный serverName для всех ключей (iOS и Android совместимость)
+                    server_names = reality_settings.get('serverNames', [])
+                    if reality_settings.get('serverName') != "www.microsoft.com":
+                        reality_settings['serverName'] = "www.microsoft.com"  # Фиксированный для всех
+                        fixed_count += 1
                     
                     # Исправляем Short ID на основе данных из БД
                     tag = inbound.get("tag", "")
@@ -669,16 +710,35 @@ class XrayConfigManager:
                             current_short_id = current_short_ids[0] if current_short_ids else None
                             
                             if db_short_id:
+                                # Обрезаем short_id до 8 символов для Android совместимости
+                                trimmed_short_id = db_short_id[:8] if len(db_short_id) > 8 else db_short_id
                                 # Используем индивидуальный short_id из БД
-                                if current_short_id != db_short_id:
-                                    reality_settings["shortIds"] = [db_short_id]
+                                if current_short_id != trimmed_short_id:
+                                    reality_settings["shortIds"] = [trimmed_short_id]
                                     fixed_count += 1
                                     fixed_keys.append({
                                         "uuid": uuid_from_tag,
                                         "name": db_key.get("name", "unknown"),
                                         "old_short_id": current_short_id,
-                                        "new_short_id": db_short_id
+                                        "new_short_id": trimmed_short_id
                                     })
+                            
+                            # Добавляем spiderX, fingerprint и serverName для Android совместимости
+                            if 'spiderX' not in reality_settings or not reality_settings.get('spiderX'):
+                                reality_settings['spiderX'] = "/"
+                                fixed_count += 1
+                            if 'fingerprint' not in reality_settings or reality_settings.get('fingerprint') != 'chrome':
+                                reality_settings['fingerprint'] = "chrome"  # Фиксированный для всех (chrome лучше работает с v2raytun на Android)
+                                fixed_count += 1
+                            # Добавляем явный serverName если отсутствует
+                            if 'serverName' not in reality_settings:
+                                server_names = reality_settings.get('serverNames', [])
+                                if server_names:
+                                    reality_settings['serverName'] = server_names[0]
+                                    fixed_count += 1
+                                else:
+                                    reality_settings['serverName'] = "www.microsoft.com"
+                                    fixed_count += 1
                             elif not current_short_ids and reality_keys.get('short_id'):
                                 # Fallback на централизованный, если нет в БД
                                 reality_settings["shortIds"] = [reality_keys['short_id']]

@@ -54,16 +54,8 @@ def generate_client_config(key_uuid, key_name, port=None):
             key_from_db = k
             break
     
-    if key_from_db and key_from_db.get('sni'):
-        # Используем сохраненный SNI из БД
-        sni = key_from_db.get('sni')
-        # Проверяем, что SNI есть в списке ServerNames
-        if sni not in server_names:
-            # Если сохраненный SNI не в списке, используем первый из списка
-            sni = server_names[0]
-    else:
-        # Для старых ключей без SNI используем первый из списка
-        sni = server_names[0]
+    # Используем фиксированный SNI для всех ключей (iOS и Android совместимость)
+    sni = "www.microsoft.com"  # Фиксированный для всех
     
     # Загрузка публичного ключа из keys.env
     public_key = None
@@ -87,8 +79,9 @@ def generate_client_config(key_uuid, key_name, port=None):
     if not port:
         port = vless_inbound['port']
     
-    # Генерация VLESS URL с случайно выбранными параметрами
-    vless_url = f"vless://{key_uuid}@{server_ip}:{port}?type=tcp&security=reality&sni={sni}&pbk={public_key}&sid={short_id}&fp=chrome#{key_name}"
+    # Генерация VLESS URL с фиксированными параметрами для iOS и Android совместимости
+    # Используем fp=chrome для лучшей совместимости с v2raytun на Android
+    vless_url = f"vless://{key_uuid}@{server_ip}:{port}?type=tcp&security=reality&encryption=none&fp=chrome&pbk={public_key}&sid={short_id}&sni={sni}#{key_name}"
     
     return vless_url
 
