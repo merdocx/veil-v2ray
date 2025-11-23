@@ -574,7 +574,7 @@ class XrayConfigManager:
                         reality_settings['spiderX'] = "/"
                         fixed_count += 1
                     if 'fingerprint' not in reality_settings or reality_settings.get('fingerprint') != 'chrome':
-                        reality_settings['fingerprint'] = "chrome"  # Изменено на "chrome" для v2raytun
+                        reality_settings['fingerprint'] = "chrome"  # Фиксированный для всех (chrome лучше работает с v2raytun на Android)
                         fixed_count += 1
                     # Фиксированный serverName для всех ключей (iOS и Android совместимость)
                     server_names = reality_settings.get('serverNames', [])

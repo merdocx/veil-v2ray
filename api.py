@@ -54,7 +54,7 @@ except ImportError:
     XRAY_STATS_AVAILABLE = False
     logging.warning("xray_stats_reader недоступен, используется fallback")
 
-app = FastAPI(title="VPN Key Management API", version="2.3.4")
+app = FastAPI(title="VPN Key Management API", version="2.3.6")
 
 # Настройка rate limiting с расширенными правилами
 # Белый список IP для исключения из rate limiting (бот)
@@ -287,11 +287,11 @@ def verify_reality_settings():
 
 @app.get("/")
 async def root():
-    return {"message": "VPN Key Management API", "version": "2.3.4", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.3.6", "status": "running"}
 
 @app.get("/api/")
 async def api_root():
-    return {"message": "VPN Key Management API", "version": "2.3.4", "status": "running"}
+    return {"message": "VPN Key Management API", "version": "2.3.6", "status": "running"}
 
 @app.get("/health")
 async def health_check():
@@ -312,7 +312,7 @@ async def health_check():
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": "2.3.4",
+            "version": "2.3.6",
             "services": {
                 "xray": xray_status,
                 "api": api_status,
@@ -368,11 +368,17 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
         # Проверяем уникальность short_id
         existing_keys = storage.get_all_keys()
         existing_short_ids = {k.get('short_id') for k in existing_keys if k.get('short_id')}
-        short_id = secrets.token_hex(4)
+        short_id = secrets.token_hex(4)  # 4 байта = 8 hex символов
+        # Проверка: short_id должен быть ровно 8 символов
+        if len(short_id) != 8:
+            raise HTTPException(status_code=500, detail=f"Invalid short_id length: {len(short_id)}, expected 8")
         max_attempts = 10
         attempt = 0
         while short_id in existing_short_ids and attempt < max_attempts:
             short_id = secrets.token_hex(4)
+            # Проверка длины при каждой генерации
+            if len(short_id) != 8:
+                raise HTTPException(status_code=500, detail=f"Invalid short_id length: {len(short_id)}, expected 8")
             attempt += 1
         if short_id in existing_short_ids:
             raise HTTPException(status_code=500, detail="Failed to generate unique short_id")
@@ -478,6 +484,12 @@ async def create_key(request: Request, key_request: CreateKeyRequest, api_key: s
                 # Не прерываем создание, но логируем ошибку
             if not test_url.startswith('vless://'):
                 logger.error(f"Generated URL has invalid format: {test_url}")
+            # КРИТИЧНО: Проверяем, что используется fp=chrome для Android совместимости
+            if 'fp=randomized' in test_url:
+                logger.error(f"Generated URL uses fp=randomized instead of fp=chrome: {test_url}")
+                # Это критическая ошибка - нужно исправить
+            if 'fp=chrome' not in test_url:
+                logger.error(f"Generated URL missing fp=chrome: {test_url}")
         except Exception as e:
             logger.error(f"Failed to generate test URL for verification: {e}")
             # Не прерываем создание, но логируем ошибку

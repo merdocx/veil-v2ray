@@ -5,6 +5,25 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и проект следует [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [2.3.6] - 2025-11-23
+
+### Удалено
+- Дополнительная очистка проекта от неактуальных файлов:
+  - 10 устаревших MD файлов (анализы ключей, конфигурации, масштабирования)
+  - 9 диагностических/тестовых Python скриптов
+  - Всего удалено: 19 файлов
+
+### Документация
+- Удалены устаревшие анализы: `KEY_ANALYSIS_REPORT.md`, `KEY_GENERATION_ANALYSIS.md`, `KEY_ISSUE_ANALYSIS.md`, `FINAL_KEY_DIAGNOSIS.md`, `KEY_FIX_REPORT.md`
+- Удалены устаревшие документы: `CONFIG_GENERATION_EXPLAINED.md`, `FINAL_IMPROVEMENTS_REPORT.md`, `URL_NAME_FIX.md`, `SCALING_TO_100_KEYS.md`
+- Удалены анализы удаления файлов: `FILES_TO_REMOVE_ANALYSIS.md`, `REMOVE_FILES_SUMMARY.md` (после применения)
+- Обновлен `README.md` - версия 2.3.6
+
+### Очистка проекта
+- Проект дополнительно очищен от неактуальных файлов
+- Все удаленные файлы сохранены в архиве `archive/unused_files_20251123_131425.tar.gz`
+- Проверена актуальность всей документации
+
 ## [2.3.5] - 2025-11-23
 
 ### Удалено

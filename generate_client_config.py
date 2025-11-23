@@ -81,7 +81,12 @@ def generate_client_config(key_uuid, key_name, port=None):
     
     # Генерация VLESS URL с фиксированными параметрами для iOS и Android совместимости
     # Используем fp=chrome для лучшей совместимости с v2raytun на Android
-    vless_url = f"vless://{key_uuid}@{server_ip}:{port}?type=tcp&security=reality&encryption=none&fp=chrome&pbk={public_key}&sid={short_id}&sni={sni}#{key_name}"
+    # Убеждаемся, что имя всегда добавляется (даже если пустое, добавляем пустую строку после #)
+    if key_name:
+        vless_url = f"vless://{key_uuid}@{server_ip}:{port}?type=tcp&security=reality&encryption=none&fp=chrome&pbk={public_key}&sid={short_id}&sni={sni}#{key_name}"
+    else:
+        # Если имя пустое, не добавляем # в конце (для совместимости с клиентами)
+        vless_url = f"vless://{key_uuid}@{server_ip}:{port}?type=tcp&security=reality&encryption=none&fp=chrome&pbk={public_key}&sid={short_id}&sni={sni}"
     
     return vless_url
 
